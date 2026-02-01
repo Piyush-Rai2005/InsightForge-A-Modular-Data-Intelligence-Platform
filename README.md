@@ -1,38 +1,27 @@
-//b// InsightForge-A-Modular-Data-Intelligence-Platform
+# 🔍 InsightForge: Modular Data Intelligence Platform
 
-Built a modular Data Intelligence Platform that ingests structured data, performs automated profiling and business analysis, 
-applies rule-based intelligence, and generates human-readable insights using Python and Pandas.
+InsightForge is a robust Python-based intelligence engine designed to transform raw structured data into actionable business insights. By leveraging a modular pipeline, it automates the journey from data ingestion to human-readable reporting.
 
+[Image of a data intelligence pipeline architecture diagram]
 
-data-intelligence-platform/
-│
-├── app/
-│   ├── main.py                 # Entry point
-│   ├── pipeline.py             # Orchestration layer
-│
-│   ├── ingestion/
-│   │   └── loader.py           # CSV / Excel loader
-│
-│   ├── profiling/
-│   │   └── profiler.py         # Data profiling & stats
-│
-│   ├── analysis/
-│   │   └── analyzer.py         # Business-level analysis
-│
-│   ├── insights/
-│   │   ├── rule_engine.py      # Rule-based intelligence
-│   │   └── insight_writer.py   # Converts results → text
-│
-│   ├── reporting/
-│   │   └── report.py           # Console / markdown output
-│
-├── data/
-│   └── sample_data.csv
-│
-├── config/
-│   └── settings.py
-│
-├── tests/                      # (Optional but job signal)
-│
-├── requirements.txt
-└── README.md
+---
+
+## 🚀 Key Features
+- **Automated Profiling**: Deep statistical analysis of datasets using Pandas.
+- **Modular Pipeline**: Decoupled architecture allowing independent scaling of ingestion, analysis, and reporting layers.
+- **Rule-Based Intelligence**: Custom engine that applies business logic to identify trends and anomalies.
+- **Human-Readable Insights**: Converts complex data frames into natural language summaries.
+
+---
+
+## 🛠️ Project Structure
+The project follows a clean-room architectural pattern to ensure maintainability:
+
+```text
+app/
+├── main.py             # Entry point: Orchestrates the full lifecycle
+├── ingestion/          # Data Loading (CSV/Excel)
+├── profiling/          # Statistical analysis & Data Health checks
+├── analysis/           # Business-level logic & aggregations
+├── insights/           # Rule Engine & Textual Insight generation
+└── reporting/          # Markdown and Console output generation
