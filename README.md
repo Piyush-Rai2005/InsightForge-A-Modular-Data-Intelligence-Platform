@@ -1,16 +1,15 @@
 # 🔍 InsightForge: Modular Data Intelligence Platform
 
-InsightForge is a robust Python-based intelligence engine designed to transform raw structured data into actionable business insights. By leveraging a modular pipeline, it automates the journey from data ingestion to human-readable reporting.
-
-[Image of a data intelligence pipeline architecture diagram]
+InsightForge is an autonomous data agent that combines **deterministic statistical analysis** with **Large Language Models (LLMs)** to provide deep-context business intelligence. It doesn't just calculate numbers; it reasons about them.
 
 ---
 
-## 🚀 Key Features
-- **Automated Profiling**: Deep statistical analysis of datasets using Pandas.
-- **Modular Pipeline**: Decoupled architecture allowing independent scaling of ingestion, analysis, and reporting layers.
-- **Rule-Based Intelligence**: Custom engine that applies business logic to identify trends and anomalies.
-- **Human-Readable Insights**: Converts complex data frames into natural language summaries.
+## 🧠 Intelligence Architecture
+InsightForge uses an **Agentic Workflow** to process data:
+1. **Perception**: Ingests structured data (CSV/Excel) and schema metadata.
+2. **Reasoning**: An LLM "Brain" analyzes the schema and plans an analysis strategy.
+3. **Action (Tool Use)**: The agent invokes modular Python tools (Pandas profilers, SQL-like analyzers) to extract facts.
+4. **Synthesis**: Converts raw statistical output into executive-level textual insights.
 
 ---
 
@@ -19,9 +18,12 @@ The project follows a clean-room architectural pattern to ensure maintainability
 
 ```text
 app/
-├── main.py             # Entry point: Orchestrates the full lifecycle
-├── ingestion/          # Data Loading (CSV/Excel)
-├── profiling/          # Statistical analysis & Data Health checks
-├── analysis/           # Business-level logic & aggregations
-├── insights/           # Rule Engine & Textual Insight generation
-└── reporting/          # Markdown and Console output generation
+├── main.py             # Agent Entry point & Orchestration
+├── agent/
+│   ├── brain.py        # LLM Logic (PydanticAI / LangGraph)
+│   └── prompts.py      # System instructions & Few-shot examples
+├── tools/              # THE "ARMS": Functions the agent can call
+│   ├── profiler.py     # Deep stats (Pandas/NumPy)
+│   └── query_engine.py # Natural language to DataFrame filtering
+├── insights/           # Synthesis layer
+└── reporting/          # PDF/Markdown generation
