@@ -14,7 +14,7 @@ import time
 # ----------------------------------------------------
 # PAGE CONFIG
 # ----------------------------------------------------
-st.set_page_config(page_title="InsightSphere", layout="wide")
+st.set_page_config(page_title="InsightForge", layout="wide")
 
 
 # ----------------------------------------------------
@@ -74,7 +74,7 @@ st.markdown(
 st.markdown(
     """
     <h1 class="title-font" style="text-align:center; color:white;">
-        🤖 InsightSphere
+        🤖 InsightForge
     </h1>
     <p class="tagline" style="text-align:center; color:white;">
         Let your data tell it's story ✨
@@ -94,3 +94,56 @@ uploaded = st.file_uploader(
         "parquet", "zip"
     ],
 )
+
+# ----------------------------------------------------
+# SMART UNIVERSAL FILE READER
+# ----------------------------------------------------
+def load_file(uploaded):
+    name = uploaded.name.lower()
+
+    if name.endswith(".csv"):
+        return pd.read_csv(uploaded)
+
+    elif name.endswith(".xlsx"):
+        return pd.read_excel(uploaded)
+
+    elif name.endswith(".json"):
+        return pd.read_json(uploaded)
+
+    elif name.endswith(".sqlite") or name.endswith(".sql"):
+        conn = sqlite3.connect(uploaded)
+        tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        if tables:
+            tname = tables[0][0]
+            return pd.read_sql(f"SELECT * FROM {tname}", conn)
+
+    elif name.endswith(".xml"):
+        tree = ET.parse(uploaded)
+        root = tree.getroot()
+        rows = [{elem.tag: elem.text for elem in child} for child in root]
+        return pd.DataFrame(rows)
+
+    elif name.endswith(".yaml") or name.endswith(".yml"):
+        data = yaml.safe_load(uploaded)
+        return pd.DataFrame(data)
+
+    elif name.endswith(".txt") or name.endswith(".log") or name.endswith(".tsv") or name.endswith(".dat"):
+        return pd.read_csv(uploaded, sep=None, engine="python")
+
+    elif name.endswith(".parquet"):
+        return pd.read_parquet(uploaded)
+
+    elif name.endswith(".zip"):
+        with zipfile.ZipFile(uploaded) as z:
+            for f in z.namelist():
+                if f.endswith(".csv"):
+                    return pd.read_csv(z.open(f))
+                elif f.endswith(".xlsx"):
+                    return pd.read_excel(z.open(f))
+        st.warning("⚠ ZIP detected but no supported file inside.")
+        return None
+
+    else:
+        st.error("❌ Unsupported format.")
+        return None
+
