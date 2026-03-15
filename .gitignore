@@ -1,0 +1,18 @@
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Sensitive Info (API Keys, etc.)
+.env
+
+# Cursor/VS Code specific
+.cursor/
+.vscode/
+
+settings.json
+ProjectStructure.md
