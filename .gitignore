@@ -14,5 +14,7 @@ __pycache__/
 .cursor/
 .vscode/
 
+tests/
+
 settings.json
 ProjectStructure.md

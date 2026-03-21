@@ -8,7 +8,7 @@ import zipfile
 import io
 import time
 
-
+from core.coordinator import PipelineCoordinator
 
 
 # ----------------------------------------------------
@@ -147,3 +147,59 @@ def load_file(uploaded):
         st.error("❌ Unsupported format.")
         return None
 
+# ---------------------------------------------------
+# PIPELINE EXECUTION
+# ---------------------------------------------------
+if uploaded:
+    df = load_file(uploaded)
+
+    if df is not None:
+
+        st.markdown("<span class='preview-title'>🔍 Data Preview</span>", unsafe_allow_html=True)
+        st.dataframe(df.head())
+
+        if st.button("🚀 Activate InsightSphere"):
+
+            status_placeholder = st.empty()
+
+           
+            spinner_html = """
+            <div style="
+                background: rgba(0, 122, 255, 0.25); 
+                padding: 20px;
+                border-radius: 10px;
+                width: 100%;
+                text-align: left;
+                font-family: 'Poppins', sans-serif;
+                font-size: 14px;
+                color: white;
+                backdrop-filter: blur(3px); 
+                border: 1px solid rgba(0,122,255,0.25); 
+}
+            ">
+             🧠 Turning your data into insights........hang tight!
+            </div>
+            """
+            status_placeholder.markdown(spinner_html, unsafe_allow_html=True)
+
+            #  Run your pipeline normally (NO Streamlit spinner)
+            result = PipelineCoordinator().run(df)
+
+            # Remove the loading bar and show success message
+            status_placeholder.empty()
+
+            st.success("✨ Your insights are ready!")
+
+            report_path = result.get("report_path")
+            if report_path:
+                with open(report_path, "rb") as f:
+                    st.download_button(
+                        "📥 Download Your Insight Report",
+                        data=f,
+                        file_name="InsightSphere_Report.pdf",
+                        mime="application/pdf",
+                        help="Your AI-generated report 🤍",
+                        width="stretch"
+                    )
+            else:
+                st.error("⚠ Report was not generated.")
