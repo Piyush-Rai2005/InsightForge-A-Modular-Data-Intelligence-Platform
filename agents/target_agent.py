@@ -1,9 +1,10 @@
 from .base_agent import BaseAgent
 import os
 from groq import Groq
+from dotenv import load_dotenv
 
 
-
+load_dotenv()  # Add this before anything else runs
 
 
 
@@ -63,4 +64,3 @@ class TargetAgent(BaseAgent):
         context["target_column"] = target_col
         return context
 
-        

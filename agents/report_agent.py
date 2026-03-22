@@ -19,7 +19,7 @@ LIGHT_GREY = colors.HexColor("#666666")
 
 
 class ReportAgent(BaseAgent):
-    """Builds a premium InsightSphere PDF report"""
+    """Builds a premium InsightForge PDF report"""
 
     def __init__(self):
         super().__init__("ReportAgent")
@@ -45,7 +45,7 @@ class ReportAgent(BaseAgent):
         canvas.drawCentredString(
             A4[0] / 2,
             A4[1] - 50,
-            "InsightSphere — Data Diagnostics Report",
+            "InsightForge — Data Diagnostics Report",
         )
 
         canvas.restoreState()
@@ -56,14 +56,14 @@ class ReportAgent(BaseAgent):
         canvas.setFont("Helvetica-Oblique", 9)
         canvas.setFillColor(LIGHT_GREY)
         canvas.drawCentredString(
-            A4[0] / 2, 18, "Designed & Automated by Kavya Singh"
+            A4[0] / 2, 18, "Designed & Automated by Piyush-Harsh-&-Nishan @ InsightForge"
         )
         canvas.restoreState()
 
     # -------------------- MAIN --------------------
     def run(self, context):
         os.makedirs("outputs", exist_ok=True)
-        pdf_path = "outputs/InsightSphere_Report.pdf"
+        pdf_path = "outputs/InsightForge_Report.pdf"
 
         doc = SimpleDocTemplate(
             pdf_path,

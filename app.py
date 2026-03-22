@@ -158,7 +158,7 @@ if uploaded:
         st.markdown("<span class='preview-title'>🔍 Data Preview</span>", unsafe_allow_html=True)
         st.dataframe(df.head())
 
-        if st.button("🚀 Activate InsightSphere"):
+        if st.button("🚀 Activate InsightForge"):
 
             status_placeholder = st.empty()
 
@@ -196,7 +196,7 @@ if uploaded:
                     st.download_button(
                         "📥 Download Your Insight Report",
                         data=f,
-                        file_name="InsightSphere_Report.pdf",
+                        file_name="InsightForge_Report.pdf",
                         mime="application/pdf",
                         help="Your AI-generated report 🤍",
                         width="stretch"
