@@ -1,5 +1,6 @@
 from .base_agent import BaseAgent
 import os
+import streamlit as st # Make sure this is imported
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -13,7 +14,7 @@ class TargetAgent(BaseAgent):
 
     def __init__(self):
         super().__init__("TargetAgent")
-        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        self.client = Groq(api_key=os.getenv("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY"))
 
     def _ask_ai_for_target(self, df):
         schema_lines = [f"{c}: {str(df[c].dtype)}" for c in df.columns]
