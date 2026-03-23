@@ -9,3 +9,4 @@ pyyaml
 lxml
 openpyxl
 groq
+python-dotenv
