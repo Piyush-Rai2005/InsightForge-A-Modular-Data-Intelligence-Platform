@@ -98,11 +98,12 @@ uploaded = st.file_uploader(
 # ----------------------------------------------------
 # SMART UNIVERSAL FILE READER
 # ----------------------------------------------------
+
 def load_file(uploaded):
     name = uploaded.name.lower()
 
     if name.endswith(".csv"):
-        return pd.read_csv(uploaded)
+        return pd.read_csv(uploaded, on_bad_lines='skip', engine="c")   
 
     elif name.endswith(".xlsx"):
         return pd.read_excel(uploaded)

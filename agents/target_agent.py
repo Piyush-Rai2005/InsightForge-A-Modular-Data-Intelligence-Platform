@@ -17,13 +17,17 @@ class TargetAgent(BaseAgent):
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY"))
 
     def _ask_ai_for_target(self, df):
-        schema_lines = [f"{c}: {str(df[c].dtype)}" for c in df.columns]
-        schema = "\n".join(schema_lines)
+        # Only send the first 5 columns and a 3-row sample to save tokens
+        sample_data = df.head(3).to_string()
+        schema_info = "\n".join([f"{c}: {str(df[c].dtype)}" for c in df.columns])
+        # schema_lines = [f"{c}: {str(df[c].dtype)}" for c in df.columns]
+        # schema = "\n".join(schema_lines)
 
         prompt = (
             "You are configuring an AutoML pipeline.\\n"
             "Here are the dataset columns with dtypes:\\n"
-            f"{schema}\\n\\n"
+            f"{schema_info}\\n\\n"
+            f"Data Sample:\n{sample_data}\n\n"
             "Which single column is most likely the prediction target/label?\\n"
             "Reply with only the exact column name."
         )

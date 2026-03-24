@@ -21,6 +21,7 @@ class DataAgent(BaseAgent):
 
         # Drop columns that are almost entirely missing
         thresh = int(0.9 * len(df))
+        #dropping the ones with less than 0.1* len of dataframe.
         df.dropna(axis=1, thresh=len(df) - thresh, inplace=True)
 
         # Try to coerce object columns to numeric when reasonable
