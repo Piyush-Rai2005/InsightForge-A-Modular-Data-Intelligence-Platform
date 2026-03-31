@@ -1,27 +1,20 @@
 from .base_agent import BaseAgent
 import os
-import streamlit as st # Make sure this is imported
 from groq import Groq
 from dotenv import load_dotenv
 
-
-load_dotenv()  # Add this before anything else runs
-
-
+load_dotenv()
 
 class TargetAgent(BaseAgent):
     """Uses Groq LLM to infer the most likely target column, with fallbacks."""
 
     def __init__(self):
         super().__init__("TargetAgent")
-        self.client = Groq(api_key=os.getenv("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY"))
+        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     def _ask_ai_for_target(self, df):
-        # Only send the first 5 columns and a 3-row sample to save tokens
         sample_data = df.head(3).to_string()
         schema_info = "\n".join([f"{c}: {str(df[c].dtype)}" for c in df.columns])
-        # schema_lines = [f"{c}: {str(df[c].dtype)}" for c in df.columns]
-        # schema = "\n".join(schema_lines)
 
         prompt = (
             "You are configuring an AutoML pipeline.\\n"
@@ -68,4 +61,3 @@ class TargetAgent(BaseAgent):
 
         context["target_column"] = target_col
         return context
-
