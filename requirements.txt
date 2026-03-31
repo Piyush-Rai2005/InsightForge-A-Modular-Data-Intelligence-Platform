@@ -10,3 +10,5 @@ lxml
 openpyxl
 groq
 python-dotenv
+duckdb
+polars

@@ -39,7 +39,7 @@ class ModelAgent(BaseAgent):
         X_test = scaler.transform(X_test)
 
         models = {
-            "Logistic Regression": LogisticRegression(max_iter=1000),
+            "Logistic Regression": LogisticRegression(solver='saga', max_iter=3000, tol=1e-3),
             "Random Forest": RandomForestClassifier(n_estimators=50), #capped for cloud speed
             "Gradient Boosting": GradientBoostingClassifier(n_estimators=50),#capped for cloud speed
         }
