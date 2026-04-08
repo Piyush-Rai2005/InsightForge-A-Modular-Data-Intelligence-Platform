@@ -20,7 +20,7 @@ _last_result : dict= {}
 # Allow requests from the React dev server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173",os.getenv("FRONTEND_URL")],
+    allow_origins=["http://localhost:5173","https://insightforge-data.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=False,
