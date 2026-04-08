@@ -20,11 +20,11 @@ _last_result : dict= {}
 # Allow requests from the React dev server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173",os.getenv("FRONTEND_URL")],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=False,
 )
-
 
 def parse_upload(file: UploadFile) -> pd.DataFrame:
     name = file.filename.lower()
