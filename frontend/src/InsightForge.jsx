@@ -4,7 +4,7 @@ const ACCEPTED = [
   "csv","xlsx","json","sql","sqlite","xml","txt","tsv","log","dat","yaml","yml","parquet","zip"
 ];
 
-const API_URL = `${import.meta.env.BACKEND_URL}/analyze`;
+const API_URL = `${import.meta.env.VITE_API_URL}/analyze`;
 
 // States: idle | loading | done | error
 export default function InsightForge() {
