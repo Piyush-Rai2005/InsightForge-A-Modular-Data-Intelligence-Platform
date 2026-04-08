@@ -5,7 +5,8 @@ import json
 class VectorStore:
     def __init__(self):
         self.client = chromadb.Client()
-        self.collection = self.client.create_collection(name="schema")
+        # Use get_or_create_collection so repeated runs don't error.
+        self.collection = self.client.get_or_create_collection(name="schema")
 
         self.model = SentenceTransformer("all-MiniLM-L6-v2")
 

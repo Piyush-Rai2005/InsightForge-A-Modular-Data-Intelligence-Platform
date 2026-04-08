@@ -5,12 +5,14 @@ from google import genai
 
 from data_engine.vector_store import VectorStore
 from data_engine.query_engine import QueryEngine
+from data_engine.schema import generate_schema
 
 # ✅ Load .env
 load_dotenv()
 
 class QueryAgent:
     def __init__(self, parquet_path, schema_path="schema.json"):
+        self.parquet_path = parquet_path
         self.engine = QueryEngine(parquet_path)
         self.vector_store = VectorStore()
 
@@ -22,7 +24,16 @@ class QueryAgent:
 
         self.client = genai.Client(api_key=api_key)
 
-        # Load schema
+        # Ensure schema exists on disk (fresh clone) then index it.
+        if not os.path.exists(schema_path):
+            if not parquet_path:
+                raise ValueError("Parquet path is required to generate schema.json")
+            generate_schema(parquet_path, output_path=schema_path)
+
+        # Index schema into the vector store so `search()` returns results.
+        self.vector_store.index_schema(schema_path=schema_path)
+
+        # Load schema for prompt construction.
         with open(schema_path, "r") as f:
             self.schema = json.load(f)
 

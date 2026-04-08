@@ -9,6 +9,9 @@ __pycache__/
 
 # Sensitive Info (API Keys, etc.)
 .env
+# ---- Local environment variants ----
+.env.*
+!.env.example
 
 # Cursor/VS Code specific
 .cursor/
@@ -25,3 +28,48 @@ schema.json
 *.parquet
 *.csv
 scripts/
+
+# ---- Node / Frontend (Vite) ----
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/coverage/
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ---- OS / Editor artifacts ----
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+*.suo
+*.user
+*.swp
+*.swo
+
+# ---- Python tooling caches ----
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+
+# ---- Local database / data artifacts (optional) ----
+*.sqlite
+*.sqlite3
+*.db
+*.duckdb
+
+# ---- Streamlit secrets/cache ----
+.streamlit/
+

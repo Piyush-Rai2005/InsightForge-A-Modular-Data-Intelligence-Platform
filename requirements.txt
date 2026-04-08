@@ -12,3 +12,11 @@ groq
 python-dotenv
 duckdb
 polars
+fastapi
+python-multipart
+uvicorn
+gunicorn
+pyarrow
+chromadb
+sentence-transformers
+google-genai

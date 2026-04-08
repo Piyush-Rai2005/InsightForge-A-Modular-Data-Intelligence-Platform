@@ -9,10 +9,13 @@ import zipfile
 import io
 import tempfile
 import os
+import base64
 
 from core.coordinator import PipelineCoordinator
 
 app = FastAPI(title="InsightForge API")
+
+_last_result : dict= {}
 
 # Allow requests from the React dev server
 app.add_middleware(
@@ -79,6 +82,94 @@ def parse_upload(file: UploadFile) -> pd.DataFrame:
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported file format: {name}")
 
+def _encode_image(path: str | None) -> str | None:
+    """Read a chart image from disk and return a base64 data-URI."""
+    if not path or not os.path.exists(path):
+        return None
+    with open(path, "rb") as f:
+        data = base64.b64encode(f.read()).decode()
+    ext = path.rsplit(".", 1)[-1].lower()
+    mime = "image/png" if ext == "png" else f"image/{ext}"
+    return f"data:{mime};base64,{data}"
+
+def _build_report_payload(result: dict) -> dict:
+    """
+    Convert the raw pipeline context dict into a JSON-serialisable
+    payload the frontend can render directly.
+    """
+    df: pd.DataFrame | None = result.get("raw_data")
+ 
+    # ── Dataset overview ──────────────────────────────────────────────────
+    dataset_overview = None
+    missing_values   = []
+ 
+    if df is not None:
+        rows, cols = df.shape
+ 
+        # describe — up to first 8 numeric columns so the table stays readable
+        desc       = df.describe().transpose().iloc[:8]
+        desc_cols  = list(desc.columns)          # e.g. count, mean, std …
+        desc_rows  = []
+        for feat, row in desc.iterrows():
+            desc_rows.append({"feature": feat, **{c: round(float(row[c]), 3) for c in desc_cols}})
+ 
+        # missing
+        missing_series = df.isna().sum()
+        missing_values = [
+            {"column": col, "missing": int(cnt)}
+            for col, cnt in missing_series[missing_series > 0].items()
+        ]
+ 
+        dataset_overview = {
+            "rows":       rows,
+            "columns":    cols,
+            "desc_cols":  desc_cols,
+            "desc_rows":  desc_rows,
+        }
+ 
+    # ── Model scores ──────────────────────────────────────────────────────
+    scores    = result.get("model_scores") or {}
+    model_comparison = [
+        {"model": name, "accuracy": round(float(acc), 4)}
+        for name, acc in scores.items()
+    ]
+ 
+    # ── Visuals (base64) ─────────────────────────────────────────────────
+    visuals = []
+    for key, label in [
+        ("corr_plot",   "Correlation Heatmap"),
+        ("target_plot", "Target Distribution"),
+        ("conf_matrix", "Confusion Matrix"),
+        ("roc_curve",   "ROC Curve"),
+        ("model_bar",   "Model Comparison Chart"),
+    ]:
+        img_b64 = _encode_image(result.get(key))
+        if img_b64:
+            visuals.append({
+                "title":   label,
+                "image":   img_b64,
+                "insight": result.get(
+                    {"corr_plot": "corr_insight", "target_plot": "target_insight",
+                     "conf_matrix": "cm_insight", "roc_curve": "roc_insight"}.get(key, ""),
+                    ""
+                ),
+            })
+ 
+    return {
+        "exec_summary":       result.get("exec_summary", ""),
+        "recommendations":    [
+            line.strip()
+            for line in (result.get("recommendations_text") or "").split("\n")
+            if line.strip()
+        ],
+        "best_model_name":    result.get("best_model_name", "N/A"),
+        "best_model_accuracy": round(float(result.get("best_model_accuracy", 0)), 4),
+        "dataset_overview":   dataset_overview,
+        "missing_values":     missing_values,
+        "model_comparison":   model_comparison,
+        "visuals":            visuals,
+    }
+    
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
@@ -108,6 +199,17 @@ async def analyze(file: UploadFile = File(...)):
         filename="InsightForge_Report.pdf",
     )
 
+@app.get("/report/pdf")
+def download_pdf():
+    """Serve the last generated PDF for download."""
+    report_path = _last_result.get("report_path")
+    if not report_path or not os.path.exists(report_path):
+        raise HTTPException(status_code=404, detail="No report available. Run /analyze first.")
+    return FileResponse(
+        path=report_path,
+        media_type="application/pdf",
+        filename="InsightForge_Report.pdf",
+    )
 
 @app.get("/health")
 def health():
