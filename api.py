@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import pandas as pd
+import polars as pl
 import sqlite3
 import xml.etree.ElementTree as ET
 import yaml
@@ -26,62 +27,81 @@ app.add_middleware(
     allow_credentials=False,
 )
 
-def parse_upload(file: UploadFile) -> pd.DataFrame:
+def parse_upload(file: UploadFile) -> pl.DataFrame:
     name = file.filename.lower()
     contents = file.file.read()
     buf = io.BytesIO(contents)
 
+    # ---------------- CSV ----------------
     if name.endswith(".csv"):
-        return pd.read_csv(buf, on_bad_lines="skip", engine="c")
+        return pl.read_csv(buf)
 
+    # ---------------- Excel ----------------
     elif name.endswith(".xlsx"):
-        return pd.read_excel(buf)
+        return pl.from_pandas(pd.read_excel(buf))
 
+    # ---------------- JSON ----------------
     elif name.endswith(".json"):
-        return pd.read_json(buf)
+        return pl.read_json(buf)
 
-    elif name.endswith(".sqlite") or name.endswith(".sql"):
-        # Write to a temp file because sqlite3 needs a path
+    # ---------------- SQLite ----------------
+    elif name.endswith((".sqlite", ".sql")):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".sqlite") as tmp:
             tmp.write(contents)
             tmp_path = tmp.name
+
         conn = sqlite3.connect(tmp_path)
         tables = conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table'"
         ).fetchall()
-        os.unlink(tmp_path)
-        if not tables:
-            raise HTTPException(status_code=400, detail="No tables found in SQLite file.")
-        return pd.read_sql(f"SELECT * FROM {tables[0][0]}", conn)
 
+        if not tables:
+            os.unlink(tmp_path)
+            raise HTTPException(status_code=400, detail="No tables found in SQLite file.")
+
+        pdf = pd.read_sql(f"SELECT * FROM {tables[0][0]}", conn)
+
+        conn.close()
+        os.unlink(tmp_path)
+        return pl.from_pandas(pdf)
+
+    # ---------------- XML ----------------
     elif name.endswith(".xml"):
         tree = ET.parse(buf)
         root = tree.getroot()
         rows = [{elem.tag: elem.text for elem in child} for child in root]
-        return pd.DataFrame(rows)
+        return pl.from_pandas(pd.DataFrame(rows))
 
-    elif name.endswith(".yaml") or name.endswith(".yml"):
+    # ---------------- YAML ----------------
+    elif name.endswith((".yaml", ".yml")):
         data = yaml.safe_load(buf)
-        return pd.DataFrame(data)
+        return pl.from_pandas(pd.DataFrame(data))
 
+    # ---------------- TXT / TSV ----------------
     elif name.endswith((".txt", ".log", ".tsv", ".dat")):
-        return pd.read_csv(buf, sep=None, engine="python")
+        return pl.read_csv(buf, separator=None)
 
+    # ---------------- Parquet ----------------
     elif name.endswith(".parquet"):
-        return pd.read_parquet(buf)
+        return pl.read_parquet(buf)
 
+    # ---------------- ZIP ----------------
     elif name.endswith(".zip"):
         with zipfile.ZipFile(buf) as z:
             for f in z.namelist():
-                if f.endswith(".csv"):
-                    return pd.read_csv(z.open(f))
-                elif f.endswith(".xlsx"):
-                    return pd.read_excel(z.open(f))
+                with z.open(f) as inner:
+                    inner_buf = io.BytesIO(inner.read())
+
+                    if f.endswith(".csv"):
+                        return pl.read_csv(inner_buf)
+                    elif f.endswith(".xlsx"):
+                        return pl.from_pandas(pd.read_excel(inner_buf))
+
         raise HTTPException(status_code=400, detail="No supported file found inside ZIP.")
 
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported file format: {name}")
-
+    
 def _encode_image(path: str | None) -> str | None:
     """Read a chart image from disk and return a base64 data-URI."""
     if not path or not os.path.exists(path):

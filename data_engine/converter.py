@@ -1,7 +1,6 @@
 import polars as pl
 import os
 
-def convert_csv_to_parquet(input_path, output_path):
-    df = pl.read_csv(input_path)
+def convert_to_parquet(df: pl.DataFrame, output_path: str):
     df.write_parquet(output_path)
     print("✅ Converted to Parquet")
