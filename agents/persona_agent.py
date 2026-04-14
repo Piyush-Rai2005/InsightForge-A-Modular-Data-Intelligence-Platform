@@ -1,13 +1,18 @@
 import json
 import os
+import re
 from .base_agent import BaseAgent
 
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
 
 class PersonaAgent(BaseAgent):
     """
     Generates human-readable customer personas from cluster profiles.
     
-    Uses Claude API to analyze cluster characteristics and create
+    Uses Gemini API to analyze cluster characteristics and create
     meaningful persona names and descriptions.
     """
 
@@ -16,16 +21,21 @@ class PersonaAgent(BaseAgent):
         Initialize PersonaAgent.
         
         Args:
-            api_key: Anthropic API key (uses ANTHROPIC_API_KEY env var if not provided)
+            api_key: Google API key (uses GOOGLE_API_KEY or GEMINI_API_KEY env var if not provided)
         """
         super().__init__("PersonaAgent")
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self.api_key = api_key or os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        
         if not self.api_key:
-            self.log("Warning: ANTHROPIC_API_KEY not set. Personas will use fallback naming.")
+            self.log("Warning: GOOGLE_API_KEY not set. Personas will use fallback naming.")
+        elif genai:
+            genai.configure(api_key=self.api_key)
+        else:
+            self.log("Warning: google-generativeai package not installed. Using fallback.")
 
     def _generate_single_persona(self, cluster_info, features):
         """
-        Generate a single persona using Claude API.
+        Generate a single persona using Gemini API.
         
         Args:
             cluster_info: Dict with cluster_id, size, characteristics
@@ -60,69 +70,58 @@ Create a JSON response with exactly this structure:
 
 Be specific and actionable. Use business terminology."""
 
-        if self.api_key:
-            persona = self._call_claude_api(prompt)
+        if self.api_key and genai:
+            persona = self._call_gemini_api(prompt)
         else:
+            persona = None
+            
+        if not persona:
             self.log(f"Using fallback persona naming for cluster {cluster_id}")
             persona = self._generate_fallback_persona(cluster_id, size_pct, characteristics)
 
         return persona
 
-    def _call_claude_api(self, prompt):
+    def _call_gemini_api(self, prompt):
         """
-        Call Claude API to generate persona.
+        Call Gemini API to generate persona.
         
         Args:
-            prompt: Prompt text for Claude
+            prompt: Prompt text for Gemini
             
         Returns:
-            Dict with persona details
+            Dict with persona details or None if failed
         """
         try:
-            import anthropic
+            # Using the fast, free tier capable 2.5 flash model
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
-            client = anthropic.Anthropic(api_key=self.api_key)
-            
-            message = client.messages.create(
-                model="claude-opus-4-20250805",
-                max_tokens=1024,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
+            # Utilizing JSON response type to guarantee structure
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    temperature=0.7,
+                )
             )
             
-            response_text = message.content[0].text
+            response_text = response.text
             
-            # Try to extract JSON from response
-            import re
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if json_match:
-                persona = json.loads(json_match.group())
-                return persona
-            else:
-                self.log("Could not parse JSON from Claude response, using fallback")
-                return None
+            # Since we enforce JSON mime type, it should parse directly
+            persona = json.loads(response_text)
+            return persona
                 
         except Exception as e:
-            self.log(f"Claude API error: {e}. Using fallback.")
+            self.log(f"Gemini API error: {e}. Using fallback.")
             return None
 
     def _generate_fallback_persona(self, cluster_id, size_pct, characteristics):
         """
         Generate persona using rule-based fallback when API unavailable.
-        
-        Args:
-            cluster_id: Cluster identifier
-            size_pct: Percentage of total
-            characteristics: List of feature summaries
-            
-        Returns:
-            Dict with persona details
         """
         # Analyze characteristics to generate persona name
         sorted_chars = sorted(
             characteristics, 
-            key=lambda x: abs(x["mean"]), 
+            key=lambda x: abs(x.get("mean", 0)), 
             reverse=True
         )
         
@@ -135,24 +134,16 @@ Be specific and actionable. Use business terminology."""
             "cluster_id": cluster_id,
             "persona_name": persona_name,
             "tagline": f"A distinct segment representing {size_pct:.1f}% of customers",
-            "description": f"Segment {cluster_id} is characterized by {', '.join(top_features[:2])}. "
+            "description": f"Segment {cluster_id} is characterized by {', '.join(top_features[:2]) if top_features else 'various factors'}. "
                           f"This group represents {size_pct:.1f}% of the customer base.",
             "key_traits": top_features[:3],
-            "business_implications": f"Tailor offerings to emphasize {top_features[0]} for maximum impact.",
+            "business_implications": f"Tailor offerings to emphasize {top_features[0] if top_features else 'general engagement'} for maximum impact.",
         }
 
     def _infer_persona_name(self, top_features, size_pct):
         """
         Infer persona name from top features and segment size.
-        
-        Args:
-            top_features: List of top feature names
-            size_pct: Segment size as percentage
-            
-        Returns:
-            str: Inferred persona name
         """
-        # Common feature keywords for persona generation
         keyword_mapping = {
             "frequency": "Frequent",
             "visit": "Active",
@@ -180,7 +171,6 @@ Be specific and actionable. Use business terminology."""
         if not persona_words:
             persona_words = ["Segment"]
 
-        # Add size indicator
         if size_pct > 30:
             size_desc = "Major"
         elif size_pct > 15:
@@ -194,25 +184,17 @@ Be specific and actionable. Use business terminology."""
         """Format characteristics for readable prompt."""
         lines = []
         for char in characteristics:
-            feature = char["feature"]
-            mean = char["mean"]
-            distribution = char["distribution"]
-            range_str = char["range"]
+            feature = char.get("feature", "unknown")
+            mean = char.get("mean", 0)
+            distribution = char.get("distribution", "normal")
+            range_str = char.get("range", "N/A")
             lines.append(
                 f"  • {feature}: avg={mean}, range={range_str}, distribution={distribution}"
             )
         return "\n".join(lines)
 
     def _create_persona_summary(self, personas):
-        """
-        Create a summary comparing all personas.
-        
-        Args:
-            personas: List of persona dicts
-            
-        Returns:
-            Dict with comparative summary
-        """
+        """Create a summary comparing all personas."""
         sorted_personas = sorted(personas, key=lambda p: p.get("cluster_id", 0))
         
         summary = {
@@ -224,15 +206,7 @@ Be specific and actionable. Use business terminology."""
         return summary
 
     def _compare_personas(self, personas):
-        """
-        Generate comparative analysis of personas.
-        
-        Args:
-            personas: List of persona dicts
-            
-        Returns:
-            Dict with comparison insights
-        """
+        """Generate comparative analysis of personas."""
         return {
             "distinct_segments": len(personas),
             "persona_names": [p["persona_name"] for p in personas],
@@ -242,12 +216,6 @@ Be specific and actionable. Use business terminology."""
     def run(self, context):
         """
         Generate personas from segmentation results.
-        
-        Args:
-            context: Dict with segmentation_result from SegmentationAgent
-            
-        Returns:
-            context: Updated with persona_descriptions
         """
         if "segmentation_result" not in context:
             raise ValueError("SegmentationAgent must run first to provide segmentation_result")
