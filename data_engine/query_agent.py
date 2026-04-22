@@ -53,7 +53,7 @@ Relevant Columns:
 Convert the user question into a valid DuckDB SQL query.
 
 Rules:
-- Table name is 'data.parquet'
+- Table name is 'data'
 - Use exact column names
 - Only return SQL
 - No explanation
