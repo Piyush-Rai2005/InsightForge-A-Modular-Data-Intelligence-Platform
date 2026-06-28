@@ -221,10 +221,14 @@ class SegmentationAgent(BaseAgent):
         summaries = []
         for feature_name, stats in features.items():
             mean = stats["mean"]
+            try:
+                range_str = f"{float(stats['min']):.2f} - {float(stats['max']):.2f}"
+            except (ValueError, TypeError):
+                range_str = f"{stats['min']} - {stats['max']}"
             summary = {
                 "feature": feature_name,
                 "mean": round(mean, 2),
-                "range": f"{stats['min']:.2f} - {stats['max']:.2f}",
+                "range": range_str,
                 "distribution": "tight" if stats["std"] < (stats["max"] - stats["min"]) * 0.1 
                                else "moderate" if stats["std"] < (stats["max"] - stats["min"]) * 0.25
                                else "wide",

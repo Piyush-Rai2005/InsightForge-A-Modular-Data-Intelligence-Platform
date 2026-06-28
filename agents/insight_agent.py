@@ -4,7 +4,8 @@ import pandas as pd
 from groq import Groq
 
 class InsightAgent(BaseAgent):
-    """Generates narrative business intelligence, actionable visual explanations, and discovers hidden insights."""
+    """Generates narrative business intelligence -- now schema-aware.
+    When ML is skipped, generates pure EDA insights instead of model-centric narratives."""
 
     def __init__(self):
         super().__init__("InsightAgent")
@@ -23,115 +24,134 @@ class InsightAgent(BaseAgent):
             return "Insight unavailable."
 
     def run(self, context):
-        df = context["raw_data"]
-        target = context.get("target_column", "(unknown)")
-
-        scores = context.get("model_scores") or {}
-        best_name = context.get("best_model_name", "N/A")
-        best_acc = context.get("best_model_accuracy", 0)
+        df = context.get("raw_data", context.get("data"))
+        if df is None:
+            return context
 
         n_rows, n_cols = df.shape
-        schema = "\n".join([f"- {c}: {str(df[c].dtype)}" for c in df.columns[:15]])
+        schema = "\n".join([f"- {c}: {str(df[c].dtype)}" for c in df.columns[:20]])
+        semantics = context.get("column_semantics", {})
+        key_stats = context.get("key_statistics", [])
+        business_questions = context.get("business_questions", "")
+        skip_ml = context.get("skip_ml", False)
+        leakage_warnings = context.get("leakage_warnings", [])
 
-        # -------------------------------------------------------------------
-        # 1. EXECUTIVE SUMMARIES (3-Bullet TL;DR) & RECOMMENDATIONS
-        # -------------------------------------------------------------------
-        if scores:
-            scores_text = ", ".join([f"{m}: {round(a, 3)}" for m, a in scores.items()])
+        stats_text = "\n".join(key_stats) if key_stats else "No key statistics available."
 
-            prompt = f"""
-You are an expert Data Strategist analyzing a dataset to present to executives.
-Dataset: {n_rows} rows, {n_cols} columns. Target variable: '{target}'.
+        if skip_ml:
+            # ── EDA-ONLY MODE: Pure business intelligence ─────────────────
+            prompt = f"""You are a senior business analyst presenting findings to executives.
+Dataset: {n_rows:,} rows, {n_cols} columns.
 Schema:
 {schema}
-Models: {scores_text} | Best: {best_name} ({best_acc:.3f})
 
-Write EXACTLY 3 sections with these exact markers. Do NOT add markdown outside the markers:
+Key Statistics:
+{stats_text}
+
+Business Questions Identified:
+{business_questions}
+
+Column Types Detected:
+- Date columns: {semantics.get('date_cols', [])}
+- Monetary columns: {semantics.get('monetary_cols', [])}
+- Rating columns: {semantics.get('rating_cols', [])}
+- Category columns: {semantics.get('category_cols', [])}
+- Geographic columns: {semantics.get('geo_cols', [])}
+
+Write EXACTLY 3 sections:
 
 <EXEC_SUM>
-(Write exactly 3 high-impact bullet points summarizing the overarching data story and model success.)
-
-<MODEL_STORY>
-(Write a short 2-sentence narrative explaining how well we can predict '{target}' and what that means for the business.)
+(Write 3 high-impact bullet points summarizing the most important business insights from this data.
+Focus on PATTERNS, TRENDS, and ACTIONABLE FINDINGS -- not ML model results.)
 
 <RECO>
-(Provide 3 actionable business steps based on these predictive capabilities.)
+(Provide 5 specific, actionable business recommendations based on the data patterns.
+Each recommendation should be something a business team can actually do.)
+
+<DISCOVERY>
+(Identify 2 surprising or hidden insights from the data statistics that could represent
+business opportunities or risks. Be specific with numbers.)
 """
-            text = self.ask_ai(prompt)
-
-            def extract(tag, blob):
-                if f"<{tag}>" not in blob:
-                    # Fallback extraction if LLM formatting is slightly off
-                    if tag in blob:
-                         return blob.split(tag)[1].split("<")[0].replace(">", "").strip()
-                    return ""
-                return blob.split(f"<{tag}>")[1].split("<")[0].strip()
-
-            exec_sum = extract("EXEC_SUM", text)
-            model_story = extract("MODEL_STORY", text)
-            reco = extract("RECO", text)
-
         else:
-            exec_sum = "• Dataset lacks target diversity.\n• Predictive modeling suspended.\n• Focus on data collection."
-            model_story = "Not enough label diversity for model training."
-            reco = "• Collect samples representing additional target classes.\n• Improve dataset balance."
+            # ── ML MODE: Include model results ────────────────────────────
+            scores = context.get("model_scores", {})
+            best_name = context.get("best_model_name", "N/A")
+            best_acc = context.get("best_model_accuracy", 0)
+            target = context.get("target_column", "(unknown)")
+            scores_text = ", ".join([f"{m}: {round(a, 3)}" for m, a in scores.items()]) if scores else "N/A"
 
-        context["exec_summary"] = exec_sum
-        context["model_story"] = model_story
-        context["recommendations_text"] = reco
+            leakage_note = ""
+            if leakage_warnings:
+                leakage_note = f"\n\nDATA LEAKAGE WARNING: {' '.join(leakage_warnings)}\nInclude a warning about this in the summary."
 
-        # -------------------------------------------------------------------
-        # 2. NATURAL LANGUAGE EXPLANATIONS (Actionable Visual Insights)
-        # -------------------------------------------------------------------
-        # Instead of just reading numbers, the LLM translates charts into business action.
+            prompt = f"""You are a senior data scientist presenting findings to executives.
+Dataset: {n_rows:,} rows, {n_cols} columns. Target: '{target}'.
+Models: {scores_text} | Best: {best_name} ({best_acc:.3f})
+{leakage_note}
 
-        corr_info = context.get("corr_info", {})
-        corr_prompt = f"""
-Act as a business analyst. Explain these top feature correlations in natural language.
-Correlations: {corr_info}
-Do not just list the numbers. Write 2 sentences explaining WHAT this means for the business and ONE action they should take based on this link.
+Key Statistics:
+{stats_text}
+
+Write EXACTLY 3 sections:
+
+<EXEC_SUM>
+(Write 3 bullet points: data story, model performance, and key business implication.
+{'If accuracy is above 97%, WARN about possible data leakage -- do NOT celebrate perfect scores.' if best_acc > 0.97 else ''})
+
+<RECO>
+(Provide 5 actionable business recommendations.)
+
+<DISCOVERY>
+(2 surprising insights from the data statistics.)
 """
-        context["corr_insight"] = self.ask_ai(corr_prompt)
 
-        target_info = context.get("target_info", {})
-        tgt_prompt = f"""
-Act as a business analyst. Look at this target class distribution: {target_info}.
-Write 2 sentences explaining if the data is skewed or balanced, and how this impacts the company's real-world strategy regarding this target.
+        text = self.ask_ai(prompt)
+
+        def extract(tag, blob):
+            if f"<{tag}>" not in blob:
+                if tag in blob:
+                    return blob.split(tag)[1].split("<")[0].replace(">", "").strip()
+                return ""
+            return blob.split(f"<{tag}>")[1].split("<")[0].strip()
+
+        context["exec_summary"] = extract("EXEC_SUM", text)
+        context["recommendations_text"] = extract("RECO", text)
+        context["discovery_insight"] = extract("DISCOVERY", text)
+
+        # ── Natural language insights for auto-charts ──────────────────────
+        auto_charts = context.get("auto_charts", [])
+        if auto_charts:
+            chart_summaries = "\n".join([f"- {c['title']}: {c.get('insight', '')}" for c in auto_charts[:6]])
+            vis_prompt = f"""As a business analyst, provide a 2-sentence narrative summary
+connecting these visualization findings into a coherent business story:
+{chart_summaries}
 """
-        context["target_insight"] = self.ask_ai(tgt_prompt)
+            context["visual_narrative"] = self.ask_ai(vis_prompt)
 
-        # -------------------------------------------------------------------
-        # 3. INSIGHT DISCOVERY (Unexpected Patterns & "Browsing")
-        # -------------------------------------------------------------------
-        self.log("Discovering hidden insights...")
-        
-        # To let the LLM "browse", we give it summary stats and correlations
-        # We sample a few rows to give it a feel for actual values without blowing up context size
-        numeric_df = df.select_dtypes(include=['number'])
-        if not numeric_df.empty:
-            summary_stats = numeric_df.describe().loc[['mean', 'min', 'max']].to_dict()
-            sample_data = df.sample(min(3, len(df))).to_dict(orient="records")
-            
-            discovery_prompt = f"""
-You are an AI Data Detective looking for unexpected or highly valuable business insights.
-Target Variable: {target}
-Summary Statistics (Mean, Min, Max): {summary_stats}
-Sample Data Rows: {sample_data}
+        # ── ML-specific insights (only if ML ran) ─────────────────────────
+        if not skip_ml:
+            corr_info = context.get("corr_info", {})
+            if corr_info:
+                context["corr_insight"] = self.ask_ai(
+                    f"Explain these feature correlations in 2 business-friendly sentences: {corr_info}"
+                )
 
-Browse this statistical summary. Identify 2 specific, potentially surprising, or highly actionable insights. 
-Write them as compelling statements (e.g., "Interestingly, while average X is [val], the maximum spikes to [val], suggesting an opportunity to..."). 
-Keep it under 4 sentences total. Be creative but grounded in the provided numbers.
-"""
-            context["discovery_insight"] = self.ask_ai(discovery_prompt)
-        else:
-            context["discovery_insight"] = "No numeric data available for deep statistical discovery."
+            target_info = context.get("target_info", {})
+            if target_info:
+                context["target_insight"] = self.ask_ai(
+                    f"Explain this target distribution in 2 sentences for a non-technical manager: {target_info}"
+                )
 
+            cm_info = context.get("conf_matrix_info", {})
+            if cm_info:
+                context["cm_insight"] = self.ask_ai(
+                    f"Explain this confusion matrix in one simple sentence: {cm_info}"
+                )
 
-        # Keep standard one-liners for technical metrics
-        cm_info = context.get("conf_matrix_info", {})
-        context["cm_insight"] = self.ask_ai(f"Explain this confusion matrix in one simple sentence for a non-technical manager: {cm_info}")
-
-        auc_val = context.get("auc_score", "N/A")
-        context["roc_insight"] = self.ask_ai(f"Explain in one sentence what an AUC of {auc_val} means for our ability to trust this model.")
+            auc_val = context.get("auc_score", "N/A")
+            if auc_val != "N/A":
+                context["roc_insight"] = self.ask_ai(
+                    f"Explain what an AUC of {auc_val} means for model trustworthiness in one sentence."
+                )
 
         return context

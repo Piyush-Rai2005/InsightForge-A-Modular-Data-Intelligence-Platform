@@ -1,63 +1,143 @@
 from .base_agent import BaseAgent
 import os
+import pandas as pd
 from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class TargetAgent(BaseAgent):
-    """Uses Groq LLM to infer the most likely target column, with fallbacks."""
+    """
+    Smart target selection — only picks a target if it's genuinely meaningful
+    for classification. Skips ML entirely for datasets that don't have a
+    natural prediction target (e.g., customer lists, transaction logs).
+    """
+
+    # Columns that are good ML targets
+    TARGET_KEYWORDS = ["target", "label", "class", "churn", "default", "outcome",
+                       "fraud", "spam", "sentiment", "survived", "approved",
+                       "cancelled", "returned", "delayed", "late", "converted"]
+
+    # Columns that are NEVER good ML targets
+    ANTI_KEYWORDS = ["_id", "uuid", "key", "name", "address", "phone",
+                     "email", "description", "comment", "url", "path"]
 
     def __init__(self):
         super().__init__("TargetAgent")
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-    def _ask_ai_for_target(self, df):
-        sample_data = df.head(3).to_string()
-        schema_info = "\n".join([f"{c}: {str(df[c].dtype)}" for c in df.columns])
+    def _is_meaningful_target(self, df, col):
+        """Check if a column is a meaningful ML target."""
+        nunique = df[col].nunique()
+        ratio = nunique / len(df) if len(df) > 0 else 1
 
-        prompt = (
-            "You are configuring an AutoML pipeline.\\n"
-            "Here are the dataset columns with dtypes:\\n"
-            f"{schema_info}\\n\\n"
-            f"Data Sample:\n{sample_data}\n\n"
-            "Which single column is most likely the prediction target/label?\\n"
-            "Reply with only the exact column name."
-        )
+        if ratio > 0.5:
+            return False
+        if nunique < 2:
+            return False
+        if nunique > 20:
+            return False
 
-        resp = self.client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.0,
-        )
-        answer = resp.choices[0].message.content.strip()
-        return answer.replace('"', "").replace("'", "").strip()
+        col_lower = col.lower()
+        if any(k in col_lower for k in self.ANTI_KEYWORDS):
+            return False
+
+        return True
+
+    def _detect_leakage_risk(self, df, target_col):
+        """Check if any feature trivially encodes the target (data leakage)."""
+        warnings = []
+        target_vals = df[target_col]
+
+        for col in df.columns:
+            if col == target_col:
+                continue
+            try:
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    corr = abs(df[col].corr(target_vals.astype(float)))
+                    if corr > 0.95:
+                        warnings.append(f"'{col}' has {corr:.3f} correlation with target -- likely data leakage")
+            except Exception:
+                pass
+
+        return warnings
 
     def run(self, context):
         df = context["clean_data"]
-        self.log("🤖 AI inferring target column...")
+        self.log("Evaluating whether ML classification is appropriate...")
 
         target_col = None
-        try:
-            ai_guess = self._ask_ai_for_target(df)
-            if ai_guess in df.columns:
-                target_col = ai_guess
-                self.log(f"AI selected target = {ai_guess}")
-        except Exception as e:
-            self.log(f"AI target inference failed: {e}")
 
-        if target_col is None:
-            priority_keywords = ["target", "label", "class", "readmitted", "outcome", "churn", "default", "y"]
-            for col in df.columns:
-                low = col.lower()
-                if any(k in low for k in priority_keywords):
-                    target_col = col
-                    self.log(f"Fallback target detected = {col}")
-                    break
+        # First check for keyword matches
+        for col in df.columns:
+            low = col.lower()
+            if any(k in low for k in self.TARGET_KEYWORDS) and self._is_meaningful_target(df, col):
+                target_col = col
+                self.log(f"Found keyword-matched target: {col}")
+                break
 
+        # Ask AI only if no keyword match
         if target_col is None:
-            target_col = df.columns[-1]
-            self.log(f"Using last column as target = {target_col}")
+            try:
+                schema_info = "\n".join([f"{c}: {str(df[c].dtype)}, {df[c].nunique()} unique" for c in df.columns[:15]])
+                sample_data = df.head(3).to_string(max_cols=12)
+
+                prompt = f"""You are evaluating a dataset for machine learning.
+Columns:
+{schema_info}
+
+Sample:
+{sample_data}
+
+Is there a meaningful prediction target in this data? A good target should be:
+- A business outcome (churn, fraud, success, delay, rating, etc.)
+- NOT an ID, name, location, or categorical attribute
+- Binary or low-cardinality (2-10 classes)
+
+If YES, reply with ONLY the exact column name.
+If NO meaningful target exists, reply with exactly: SKIP_ML"""
+
+                resp = self.client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0,
+                )
+                answer = resp.choices[0].message.content.strip().replace('"', '').replace("'", '').strip()
+
+                if answer == "SKIP_ML" or answer not in df.columns:
+                    self.log("AI determined: no meaningful ML target in this dataset")
+                    context["target_column"] = None
+                    context["skip_ml"] = True
+                    context["skip_ml_reason"] = "No meaningful prediction target detected. This dataset is better suited for exploratory analysis and business intelligence queries."
+                    return context
+
+                if self._is_meaningful_target(df, answer):
+                    target_col = answer
+                    self.log(f"AI selected target: {answer}")
+                else:
+                    self.log(f"AI suggested '{answer}' but it doesn't meet quality checks -- skipping ML")
+                    context["target_column"] = None
+                    context["skip_ml"] = True
+                    context["skip_ml_reason"] = f"AI suggested '{answer}' as target but it has too many unique values or is an identifier."
+                    return context
+
+            except Exception as e:
+                self.log(f"AI target inference failed: {e}")
+
+        # Final fallback -- don't force ML
+        if target_col is None:
+            self.log("No suitable ML target found -- running in EDA-only mode")
+            context["target_column"] = None
+            context["skip_ml"] = True
+            context["skip_ml_reason"] = "No suitable classification target found. Showing exploratory data analysis instead."
+            return context
+
+        # Check for data leakage
+        leakage_warnings = self._detect_leakage_risk(df, target_col)
+        if leakage_warnings:
+            context["leakage_warnings"] = leakage_warnings
+            self.log(f"Data leakage detected: {leakage_warnings}")
 
         context["target_column"] = target_col
+        context["skip_ml"] = False
         return context

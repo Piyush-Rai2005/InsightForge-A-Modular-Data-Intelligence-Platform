@@ -10,11 +10,15 @@ class FeatureAgent(BaseAgent):
         super().__init__("FeatureAgent")
 
     def run(self, context):
+        if context.get("skip_ml"):
+            self.log("Skipping feature analysis -- ML was skipped.")
+            return context
+
         df = context["clean_data"]
-        target = context["target_column"]
+        target = context.get("target_column")
         os.makedirs("outputs", exist_ok=True)
 
-        if target not in df.columns:
+        if not target or target not in df.columns:
             self.log("Target column missing in cleaned data; skipping feature heatmap.")
             return context
 

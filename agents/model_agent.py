@@ -1,8 +1,10 @@
 import os
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler # Add this import
+from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from .base_agent import BaseAgent
 
@@ -13,11 +15,19 @@ class ModelAgent(BaseAgent):
         super().__init__("ModelAgent")
 
     def run(self, context):
-        df = context["clean_data"]
-        target = context["target_column"]
+        # Skip ML if TargetAgent determined it's not appropriate
+        if context.get("skip_ml"):
+            self.log(f"Skipping ML: {context.get('skip_ml_reason', 'No target')}")
+            context["model_scores"] = None
+            context["best_model_name"] = None
+            context["best_model_accuracy"] = None
+            return context
 
-        if target not in df.columns or df[target].nunique() < 2:
-            self.log("❗ Only one target class detected or target missing — skipping model training.")
+        df = context["clean_data"]
+        target = context.get("target_column")
+
+        if not target or target not in df.columns or df[target].nunique() < 2:
+            self.log("No valid target -- skipping model training.")
             context["model_scores"] = None
             context["best_model_name"] = None
             context["best_model_accuracy"] = None
@@ -40,8 +50,8 @@ class ModelAgent(BaseAgent):
 
         models = {
             "Logistic Regression": LogisticRegression(solver='saga', max_iter=3000, tol=1e-3),
-            "Random Forest": RandomForestClassifier(n_estimators=50), #capped for cloud speed
-            "Gradient Boosting": GradientBoostingClassifier(n_estimators=50),#capped for cloud speed
+            "Random Forest": RandomForestClassifier(n_estimators=50),
+            "Gradient Boosting": GradientBoostingClassifier(n_estimators=50),
         }
 
         scores = {}
@@ -65,11 +75,51 @@ class ModelAgent(BaseAgent):
         context["X_test"] = X_test
         context["y_test"] = y_test
 
+        # ── Leakage detection ───────────────────────────────────────────────
+        if best_score > 0.97:
+            leakage_warnings = context.get("leakage_warnings", [])
+            leakage_warnings.append(
+                f"Best model accuracy is {best_score*100:.1f}% -- suspiciously high. "
+                f"This likely indicates data leakage: a feature directly encodes the target '{target}'. "
+                f"Verify that no input feature is derived from or equivalent to the target."
+            )
+            context["leakage_warnings"] = leakage_warnings
+            self.log(f"LEAKAGE WARNING: {best_model_name} scored {best_score} -- likely data leakage")
+
+        # ── Plotly JSON spec ────────────────────────────────────────────────
+        names = list(scores.keys())
+        vals = [round(v, 4) for v in scores.values()]
+        colors = ["#63d396" if n == best_model_name else "#4a9ed6" for n in names]
+
+        context["model_bar_plotly"] = {
+            "data": [{
+                "type": "bar",
+                "x": names,
+                "y": vals,
+                "marker": {
+                    "color": colors,
+                    "line": {"color": "rgba(255,255,255,0.1)", "width": 1},
+                },
+                "text": [f"{v*100:.1f}%" for v in vals],
+                "textposition": "outside",
+                "textfont": {"color": "#f0f2f5"},
+                "hovertemplate": "%{x}: %{y:.4f}<extra></extra>",
+            }],
+            "layout": {
+                "title": {"text": "Model Accuracy Comparison", "font": {"color": "#f0f2f5", "size": 16}},
+                "paper_bgcolor": "#0f1117",
+                "plot_bgcolor": "#0f1117",
+                "font": {"color": "#a0a0a0"},
+                "xaxis": {"gridcolor": "rgba(255,255,255,0.05)"},
+                "yaxis": {"title": "Accuracy", "range": [0, 1.05], "gridcolor": "rgba(255,255,255,0.05)"},
+                "margin": {"l": 60, "r": 30, "t": 50, "b": 50},
+            }
+        }
+
+        # ── PNG fallback ────────────────────────────────────────────────────
         os.makedirs("outputs", exist_ok=True)
         plt.figure(figsize=(6, 4), dpi=200)
-        names = list(scores.keys())
-        vals = list(scores.values())
-        plt.bar(names, vals)
+        plt.bar(names, list(scores.values()))
         plt.title("Model Accuracy Comparison")
         plt.ylabel("Accuracy")
         plt.ylim(0, 1.0)
