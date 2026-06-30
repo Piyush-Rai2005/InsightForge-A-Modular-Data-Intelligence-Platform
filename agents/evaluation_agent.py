@@ -11,8 +11,8 @@ class EvaluationAgent(BaseAgent):
         super().__init__("EvaluationAgent")
 
     def run(self, context):
-        if context.get("model_scores") is None:
-            self.log("⚠ Skipping evaluation — no trained models (single-class target).")
+        if context.get("skip_ml") or context.get("model_scores") is None:
+            self.log("Skipping evaluation -- ML was skipped or no trained models.")
             return context
 
         os.makedirs("outputs", exist_ok=True)
@@ -52,7 +52,11 @@ class EvaluationAgent(BaseAgent):
             auc = roc_auc_score(y_test, probs)
 
             plt.figure(figsize=(4, 3), dpi=200)
-            plt.plot(fpr, tpr, label=f"AUC = {auc:.2f}")
+            try:
+                auc_str = f"{float(auc):.2f}"
+            except (ValueError, TypeError):
+                auc_str = str(auc)
+            plt.plot(fpr, tpr, label=f"AUC = {auc_str}")
             plt.plot([0, 1], [0, 1], linestyle="--", color="grey")
             plt.title("ROC Curve")
             plt.xlabel("False Positive Rate")

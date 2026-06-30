@@ -100,8 +100,12 @@ class AdvancedInsightsAgent(BaseAgent):
                 
                 # Contextual alert generation
                 max_val = outliers[col].max()
+                try:
+                    max_fmt = f"{float(max_val):.2f}"
+                except (ValueError, TypeError):
+                    max_fmt = str(max_val)
                 anomaly_insights["top_alerts"].append(
-                    f"Statistical Outlier in '{col}': {outlier_count} instances exceeded normal thresholds (e.g., extreme value of {max_val:.2f})."
+                    f"Statistical Outlier in '{col}': {outlier_count} instances exceeded normal thresholds (e.g., extreme value of {max_fmt})."
                 )
 
         # Sort alerts to keep the top 5 most severe
@@ -142,8 +146,12 @@ class AdvancedInsightsAgent(BaseAgent):
             direction = "increases" if actual_corr > 0 else "decreases"
             
             # User-friendly feature importance
+            try:
+                corr_fmt = f"{float(abs_corr):.2f}"
+            except (ValueError, TypeError):
+                corr_fmt = str(abs_corr)
             sensitivity_insights["top_drivers"].append(
-                f"'{feature}' (Impact Strength: {abs_corr:.2f})"
+                f"'{feature}' (Impact Strength: {corr_fmt})"
             )
 
             # Scenario Simulation (What-if)
