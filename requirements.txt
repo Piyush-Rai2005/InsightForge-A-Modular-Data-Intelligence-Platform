@@ -1,4 +1,3 @@
-streamlit
 pandas
 numpy
 scikit-learn
@@ -15,8 +14,18 @@ polars
 fastapi
 python-multipart
 uvicorn
-gunicorn
 pyarrow
 chromadb
 sentence-transformers
 google-genai
+# ── New dependencies (v2.0) ──
+celery[redis]
+redis
+fakeredis
+pyjwt[crypto]
+bcrypt
+sqlalchemy
+apscheduler
+python-pptx
+plotly
+charset-normalizer

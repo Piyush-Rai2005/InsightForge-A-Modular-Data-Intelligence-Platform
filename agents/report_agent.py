@@ -146,7 +146,7 @@ class ReportAgent(BaseAgent):
             desc = df.describe().transpose().iloc[:6]
             desc_data = [["Feature"] + list(desc.columns)]
             for idx, row in desc.iterrows():
-                desc_data.append([idx] + [f"{v:.2f}" for v in row.values])
+                desc_data.append([idx] + [f"{float(v):.2f}" if isinstance(v, (int, float)) else str(v) for v in row.values])
 
             desc_tbl = Table(desc_data, hAlign="LEFT")
             desc_tbl.setStyle(
@@ -190,7 +190,11 @@ class ReportAgent(BaseAgent):
 
             table_data = [["Model", "Accuracy"]]
             for name, acc in scores.items():
-                table_data.append([name, f"{acc:.2f}"])
+                try:
+                    acc_str = f"{float(acc):.2f}"
+                except (ValueError, TypeError):
+                    acc_str = str(acc)
+                table_data.append([name, acc_str])
 
             tbl = Table(table_data, hAlign="LEFT")
             tbl.setStyle(
@@ -209,9 +213,13 @@ class ReportAgent(BaseAgent):
             bar_path = context.get("model_bar")
             if bar_path and os.path.exists(bar_path):
                 story.append(Image(bar_path, width=380, height=500))
+                try:
+                    best_acc_str = f"{float(best_acc):.2f}"
+                except (ValueError, TypeError):
+                    best_acc_str = str(best_acc)
                 story.append(
                     Paragraph(
-                        f"The comparison shows <b>{best_name}</b> achieved the highest performance with an accuracy of {best_acc:.2f}.",
+                        f"The comparison shows <b>{best_name}</b> achieved the highest performance with an accuracy of {best_acc_str}.",
                         styles["italic"],
                     )
                 )
