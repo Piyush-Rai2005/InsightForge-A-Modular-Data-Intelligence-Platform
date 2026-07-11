@@ -1,0 +1,205 @@
+{
+    "columns": [
+        {
+            "name": "Row ID",
+            "type": "Int64"
+        },
+        {
+            "name": "Order ID",
+            "type": "String"
+        },
+        {
+            "name": "Order Date",
+            "type": "String"
+        },
+        {
+            "name": "Ship Date",
+            "type": "String"
+        },
+        {
+            "name": "Ship Mode",
+            "type": "String"
+        },
+        {
+            "name": "Customer ID",
+            "type": "String"
+        },
+        {
+            "name": "Customer Name",
+            "type": "String"
+        },
+        {
+            "name": "Segment",
+            "type": "String"
+        },
+        {
+            "name": "Country",
+            "type": "String"
+        },
+        {
+            "name": "City",
+            "type": "String"
+        },
+        {
+            "name": "State",
+            "type": "String"
+        },
+        {
+            "name": "Postal Code",
+            "type": "Int64"
+        },
+        {
+            "name": "Region",
+            "type": "String"
+        },
+        {
+            "name": "Product ID",
+            "type": "String"
+        },
+        {
+            "name": "Category",
+            "type": "String"
+        },
+        {
+            "name": "Sub-Category",
+            "type": "String"
+        },
+        {
+            "name": "Product Name",
+            "type": "String"
+        },
+        {
+            "name": "Sales",
+            "type": "Float64"
+        },
+        {
+            "name": "Quantity",
+            "type": "Int64"
+        },
+        {
+            "name": "Discount",
+            "type": "Float64"
+        },
+        {
+            "name": "Profit",
+            "type": "Float64"
+        }
+    ],
+    "sample_data": [
+        {
+            "Row ID": 1,
+            "Order ID": "CA-2016-152156",
+            "Order Date": "11/8/2016",
+            "Ship Date": "11/11/2016",
+            "Ship Mode": "Second Class",
+            "Customer ID": "CG-12520",
+            "Customer Name": "Claire Gute",
+            "Segment": "Consumer",
+            "Country": "United States",
+            "City": "Henderson",
+            "State": "Kentucky",
+            "Postal Code": 42420,
+            "Region": "South",
+            "Product ID": "FUR-BO-10001798",
+            "Category": "Furniture",
+            "Sub-Category": "Bookcases",
+            "Product Name": "Bush Somerset Collection Bookcase",
+            "Sales": 261.96,
+            "Quantity": 2,
+            "Discount": 0.0,
+            "Profit": 41.9136
+        },
+        {
+            "Row ID": 2,
+            "Order ID": "CA-2016-152156",
+            "Order Date": "11/8/2016",
+            "Ship Date": "11/11/2016",
+            "Ship Mode": "Second Class",
+            "Customer ID": "CG-12520",
+            "Customer Name": "Claire Gute",
+            "Segment": "Consumer",
+            "Country": "United States",
+            "City": "Henderson",
+            "State": "Kentucky",
+            "Postal Code": 42420,
+            "Region": "South",
+            "Product ID": "FUR-CH-10000454",
+            "Category": "Furniture",
+            "Sub-Category": "Chairs",
+            "Product Name": "Hon Deluxe Fabric Upholstered Stacking Chairs, Rounded Back",
+            "Sales": 731.94,
+            "Quantity": 3,
+            "Discount": 0.0,
+            "Profit": 219.582
+        },
+        {
+            "Row ID": 3,
+            "Order ID": "CA-2016-138688",
+            "Order Date": "6/12/2016",
+            "Ship Date": "6/16/2016",
+            "Ship Mode": "Second Class",
+            "Customer ID": "DV-13045",
+            "Customer Name": "Darrin Van Huff",
+            "Segment": "Corporate",
+            "Country": "United States",
+            "City": "Los Angeles",
+            "State": "California",
+            "Postal Code": 90036,
+            "Region": "West",
+            "Product ID": "OFF-LA-10000240",
+            "Category": "Office Supplies",
+            "Sub-Category": "Labels",
+            "Product Name": "Self-Adhesive Address Labels for Typewriters by Universal",
+            "Sales": 14.62,
+            "Quantity": 2,
+            "Discount": 0.0,
+            "Profit": 6.8714
+        },
+        {
+            "Row ID": 4,
+            "Order ID": "US-2015-108966",
+            "Order Date": "10/11/2015",
+            "Ship Date": "10/18/2015",
+            "Ship Mode": "Standard Class",
+            "Customer ID": "SO-20335",
+            "Customer Name": "Sean O'Donnell",
+            "Segment": "Consumer",
+            "Country": "United States",
+            "City": "Fort Lauderdale",
+            "State": "Florida",
+            "Postal Code": 33311,
+            "Region": "South",
+            "Product ID": "FUR-TA-10000577",
+            "Category": "Furniture",
+            "Sub-Category": "Tables",
+            "Product Name": "Bretford CR4500 Series Slim Rectangular Table",
+            "Sales": 957.5775,
+            "Quantity": 5,
+            "Discount": 0.45,
+            "Profit": -383.031
+        },
+        {
+            "Row ID": 5,
+            "Order ID": "US-2015-108966",
+            "Order Date": "10/11/2015",
+            "Ship Date": "10/18/2015",
+            "Ship Mode": "Standard Class",
+            "Customer ID": "SO-20335",
+            "Customer Name": "Sean O'Donnell",
+            "Segment": "Consumer",
+            "Country": "United States",
+            "City": "Fort Lauderdale",
+            "State": "Florida",
+            "Postal Code": 33311,
+            "Region": "South",
+            "Product ID": "OFF-ST-10000760",
+            "Category": "Office Supplies",
+            "Sub-Category": "Storage",
+            "Product Name": "Eldon Fold 'N Roll Cart System",
+            "Sales": 22.368,
+            "Quantity": 2,
+            "Discount": 0.2,
+            "Profit": 2.5164
+        }
+    ]
+}

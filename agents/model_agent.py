@@ -40,6 +40,12 @@ class ModelAgent(BaseAgent):
         X = df.drop(columns=[target])
         y = df[target]
 
+        MAX_ROWS = 2000
+        if len(X) > MAX_ROWS:
+            self.log(f"Dataset too large for fast insights. Sampling down from {len(X)} to {MAX_ROWS} rows for model training...")
+            X = X.sample(n=MAX_ROWS, random_state=42)
+            y = y.loc[X.index]
+
         # ── Determine task type ─────────────────────────────────────────────
         task_type = context.get("task_type", "classification")
         self.log(f"Training models for: {task_type}")

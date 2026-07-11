@@ -78,7 +78,17 @@ class TargetAgent(BaseAgent):
         # Ask AI only if no keyword match
         if target_col is None:
             try:
-                schema_info = "\n".join([f"{c}: {str(df[c].dtype)}, {df[c].nunique()} unique" for c in df.columns[:15]])
+                # Use the RAGRetriever built by SchemaInsightAgent if available.
+                # For narrow datasets (≤ 20 cols) it returns all columns;
+                # for wide datasets it surfaces the most "target-like" columns,
+                # preventing the old [:15] hard cut from missing churn/fraud cols at index 20+.
+                retriever = context.get("rag_retriever")
+                if retriever and retriever.rag_active:
+                    schema_info = retriever.get_schema(
+                        "prediction target outcome binary classification label churn fraud", k=20
+                    )
+                else:
+                    schema_info = "\n".join([f"{c}: {str(df[c].dtype)}, {df[c].nunique()} unique" for c in df.columns])
                 sample_data = df.head(3).to_string(max_cols=12)
 
                 prompt = f"""You are evaluating a dataset for machine learning.

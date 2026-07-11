@@ -29,7 +29,16 @@ class InsightAgent(BaseAgent):
             return context
 
         n_rows, n_cols = df.shape
-        schema = "\n".join([f"- {c}: {str(df[c].dtype)}" for c in df.columns[:20]])
+        # Reuse the RAGRetriever created by SchemaInsightAgent (step 3).
+        # RAG ON  → retrieves columns most relevant to "key metrics / business outcome"
+        # RAG OFF → returns all columns (dataset ≤ 20 cols, no overhead)
+        retriever = context.get("rag_retriever")
+        if retriever and retriever.rag_active:
+            schema = retriever.get_schema(
+                "key metrics business outcome important factors performance indicators", k=20
+            )
+        else:
+            schema = "\n".join([f"- {c}: {str(df[c].dtype)}" for c in df.columns])
         semantics = context.get("column_semantics", {})
         key_stats = context.get("key_statistics", [])
         business_questions = context.get("business_questions", "")
@@ -58,19 +67,19 @@ Column Types Detected:
 - Category columns: {semantics.get('category_cols', [])}
 - Geographic columns: {semantics.get('geo_cols', [])}
 
-Write EXACTLY 3 sections:
+Write EXACTLY 3 sections. Do NOT wrap text in ** or any markdown bold formatting. Use plain text only.
 
 <EXEC_SUM>
 (Write 3 high-impact bullet points summarizing the most important business insights from this data.
-Focus on PATTERNS, TRENDS, and ACTIONABLE FINDINGS -- not ML model results.)
+Focus on PATTERNS, TRENDS, and ACTIONABLE FINDINGS -- not ML model results. Do NOT use ** bold markers.)
 
 <RECO>
 (Provide 5 specific, actionable business recommendations based on the data patterns.
-Each recommendation should be something a business team can actually do.)
+Each recommendation should be something a business team can actually do. Do NOT use ** bold markers.)
 
 <DISCOVERY>
 (Identify 2 surprising or hidden insights from the data statistics that could represent
-business opportunities or risks. Be specific with numbers.)
+business opportunities or risks. Be specific with numbers. Do NOT use ** bold markers.)
 """
         else:
             # ── ML MODE: Include model results ────────────────────────────
@@ -92,17 +101,17 @@ Models: {scores_text} | Best: {best_name} ({best_acc:.3f})
 Key Statistics:
 {stats_text}
 
-Write EXACTLY 3 sections:
+Write EXACTLY 3 sections. Do NOT wrap text in ** or any markdown bold formatting. Use plain text only.
 
 <EXEC_SUM>
-(Write 3 bullet points: data story, model performance, and key business implication.
+(Write 3 bullet points: data story, model performance, and key business implication. Do NOT use ** bold markers.
 {'If accuracy is above 97%, WARN about possible data leakage -- do NOT celebrate perfect scores.' if best_acc > 0.97 else ''})
 
 <RECO>
-(Provide 5 actionable business recommendations.)
+(Provide 5 actionable business recommendations. Do NOT use ** bold markers.)
 
 <DISCOVERY>
-(2 surprising insights from the data statistics.)
+(2 surprising insights from the data statistics. Do NOT use ** bold markers.)
 """
 
         text = self.ask_ai(prompt)
@@ -110,9 +119,16 @@ Write EXACTLY 3 sections:
         def extract(tag, blob):
             if f"<{tag}>" not in blob:
                 if tag in blob:
-                    return blob.split(tag)[1].split("<")[0].replace(">", "").strip()
-                return ""
-            return blob.split(f"<{tag}>")[1].split("<")[0].strip()
+                    raw = blob.split(tag)[1].split("<")[0].replace(">", "").strip()
+                else:
+                    return ""
+            else:
+                raw = blob.split(f"<{tag}>")[1].split("<")[0].strip()
+            # Clean up orphaned ** bold markers that the AI sometimes wraps around output
+            import re
+            raw = re.sub(r'^\s*\*\*\s*$', '', raw, flags=re.MULTILINE)  # remove lines that are just **
+            raw = raw.strip()
+            return raw
 
         context["exec_summary"] = extract("EXEC_SUM", text)
         context["recommendations_text"] = extract("RECO", text)

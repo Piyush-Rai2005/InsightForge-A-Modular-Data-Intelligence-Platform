@@ -12,6 +12,7 @@ import logging
 import pandas as pd
 import numpy as np
 from .base_agent import BaseAgent
+from data_engine.rag_retriever import RAGRetriever
 
 logger = logging.getLogger(__name__)
 
@@ -418,6 +419,14 @@ class SchemaInsightAgent(BaseAgent):
 
         self.log("Analyzing schema for business-relevant insights...")
 
+        # ── Build RAGRetriever (threshold-aware: RAG only when > 20 columns) ────
+        retriever = RAGRetriever(df)
+        context["rag_retriever"] = retriever  # reused by TargetAgent + InsightAgent
+        if retriever.rag_active:
+            self.log(f"RAG activated — {len(df.columns)} columns indexed for focused LLM prompts")
+        else:
+            self.log(f"RAG skipped — {len(df.columns)} columns (≤ 20), using full schema directly")
+
         semantics = self._detect_column_semantics(df)
         context["column_semantics"] = semantics
 
@@ -429,7 +438,11 @@ class SchemaInsightAgent(BaseAgent):
         context["auto_charts"] = auto_charts
         self.log(f"Generated {len(auto_charts)} data-specific visualizations")
 
-        schema_text = "\n".join([f"- {c}: {str(df[c].dtype)} ({df[c].nunique()} unique)" for c in df.columns[:20]])
+        # schema_text for Groq: RAG retrieves the most semantically rich columns;
+        # for narrow datasets the retriever returns all columns anyway.
+        schema_text = retriever.get_schema(
+            "business analysis overview key metrics important columns schema", k=20
+        )
         sample_text = df.head(3).to_string(max_cols=15)
 
         prompt = f"""You are a senior business analyst. Given this dataset schema:

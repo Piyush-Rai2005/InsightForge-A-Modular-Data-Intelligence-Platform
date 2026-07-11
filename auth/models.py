@@ -29,6 +29,9 @@ class AnalysisSession(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     report_json = Column(Text, default="{}")       # cached report payload
     dashboard_json = Column(Text, default="{}")     # cached dashboard payload
+    health_report_json = Column(Text, default="{}")
+    trust_score_json = Column(Text, default="{}")
+    advanced_insights_json = Column(Text, default="{}")
     chat_history = Column(Text, default="[]")       # JSON array of messages
     schedule_frequency = Column(String, default=None)
 

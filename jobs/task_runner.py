@@ -8,7 +8,6 @@ import traceback
 import logging
 
 from cache.redis_cache import cache
-from core.coordinator import PipelineCoordinator
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +26,7 @@ def dispatch_pipeline(df, analysis_id: str = None) -> str:
 
     def _run():
         try:
+            from core.coordinator import PipelineCoordinator
             coordinator = PipelineCoordinator()
 
             def on_step(agent_name, index, total):

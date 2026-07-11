@@ -27,7 +27,7 @@ class HealthAgent(BaseAgent):
         
         completeness = {
             "total_cells": df.height * df.width,
-            "missing_cells": int(df.null_count().select(pl.all().sum()).item()),
+            "missing_cells": int(df.null_count().to_numpy().sum()),
             "columns": {},
         }
 
@@ -68,7 +68,7 @@ class HealthAgent(BaseAgent):
             df = pl.from_pandas(df)
             
         # 🔥 compute once instead of repeating
-        duplicated_rows_series = df.duplicated()
+        duplicated_rows_series = df.is_duplicated()
         duplicate_rows_count = int(duplicated_rows_series.sum())
 
         duplicates = {
@@ -83,12 +83,13 @@ class HealthAgent(BaseAgent):
         # 🔥 minor optimization: avoid repeated column access
         cols = df.columns
 
-        # Check for duplicate columns (exact same values)
-        for i, col1 in enumerate(cols):
-            col1_data = df[col1]   # cache column
-            for col2 in cols[i + 1 :]:
-                if col1_data.series_equal(df[col2]):
-                    duplicates["duplicate_columns"].append((col1, col2))
+        # Check for duplicate columns (exact same values) - Skip if too many columns to avoid O(N^2) slowdown
+        if len(cols) <= 50:
+            for i, col1 in enumerate(cols):
+                col1_data = df[col1]   # cache column
+                for col2 in cols[i + 1 :]:
+                    if col1_data.equals(df[col2]):
+                        duplicates["duplicate_columns"].append((col1, col2))
 
         duplicates["has_duplicates"] = (
             duplicates["duplicate_rows"] > 0

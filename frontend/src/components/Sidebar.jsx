@@ -33,7 +33,7 @@ function groupByDate(sessions) {
   return Object.entries(groups).filter(([, items]) => items.length > 0);
 }
 
-export default function Sidebar({ collapsed, onToggle }) {
+export default function Sidebar({ collapsed, onToggle, isLightMode, onToggleTheme }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, token, logout, authHeaders } = useAuth();
@@ -56,6 +56,27 @@ export default function Sidebar({ collapsed, onToggle }) {
       headers: authHeaders(),
     });
     setSessions((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleRename = async (e, id, currentName) => {
+    e.stopPropagation();
+    setMenuOpen(null);
+    const newName = window.prompt("Rename this analysis:", currentName);
+    if (!newName || newName === currentName) return;
+    try {
+      const res = await fetch(`${BASE_URL}/sessions/${id}`, {
+        method: "PATCH",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName }),
+      });
+      if (res.ok) {
+        setSessions((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, filename: newName } : s))
+        );
+      }
+    } catch (err) {
+      console.error("Rename failed", err);
+    }
   };
 
   const activeId = location.pathname.startsWith("/dashboard/")
@@ -136,7 +157,8 @@ export default function Sidebar({ collapsed, onToggle }) {
 
                     {menuOpen === s.id && (
                       <div className="sb-item-dropdown">
-                        <button onClick={(e) => handleDelete(e, s.id)}>🗑️ Delete</button>
+                        <button className="sb-item-dropdown-rename" onClick={(e) => handleRename(e, s.id, s.filename)}>✏️ Rename</button>
+                        <button className="sb-item-dropdown-delete" onClick={(e) => handleDelete(e, s.id)}>🗑️ Delete</button>
                       </div>
                     )}
                   </div>
@@ -147,18 +169,26 @@ export default function Sidebar({ collapsed, onToggle }) {
         </div>
       )}
 
-      {/* Bottom */}
-      {!collapsed && token && user && (
-        <div className="sb-bottom">
+      {/* Theme Toggle & User Info */}
+      <div className="sb-bottom">
+        {!collapsed && (
+          <button className="sb-theme-toggle" onClick={onToggleTheme}>
+            {isLightMode ? "🌙 Switch to Dark Mode" : "☀️ Switch to Light Mode"}
+          </button>
+        )}
+        {token && user && (
           <div className="sb-user">
             <div className="sb-avatar">{(user.display_name || user.email || "U")[0].toUpperCase()}</div>
-            <span className="sb-user-name">{user.display_name || user.email}</span>
+            {!collapsed && (
+              <div className="sb-user-info">
+                <div className="sb-user-name">{user.display_name || "Analyst"}</div>
+                <div className="sb-user-role">{user.email}</div>
+                <button className="sb-logout" onClick={logout}>Sign Out</button>
+              </div>
+            )}
           </div>
-          <button className="sb-logout" onClick={logout}>
-            Sign Out
-          </button>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   );
 }

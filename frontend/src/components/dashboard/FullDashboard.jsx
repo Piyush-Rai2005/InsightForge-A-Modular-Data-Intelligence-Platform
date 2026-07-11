@@ -5,6 +5,8 @@ import TrustGauge from "./TrustGauge";
 import PlotlyChart from "../report/PlotlyChart";
 import { useChat } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const TABS = [
   { id: "quality", icon: "📊", label: "Data Quality" },
@@ -215,7 +217,11 @@ function InsightsTab({ report, advanced }) {
       {exec_summary && (
         <div className="fd-card fd-card--highlight">
           <h3 className="fd-card-title">📋 Executive Summary</h3>
-          <p className="fd-summary-text">{exec_summary}</p>
+          <div className="markdown-body fd-summary-text">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {exec_summary}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
 
@@ -226,15 +232,15 @@ function InsightsTab({ report, advanced }) {
           What This Means for Your Business
         </h3>
         <div className="fd-insight-list">
-          {(summary.executive_summary || []).length > 0 ? (
-            summary.executive_summary.map((item, i) => (
+          {(summary.executive_summary || []).filter(item => item && item.trim() !== "**" && item.trim() !== "***").length > 0 ? (
+            summary.executive_summary.filter(item => item && item.trim() !== "**" && item.trim() !== "***").map((item, i) => (
               <div key={i} className="fd-insight-item fd-insight-item--manager">
                 <span className="fd-insight-num">{String(i + 1).padStart(2, "0")}</span>
                 <span>{item}</span>
               </div>
             ))
           ) : (
-            recommendations.slice(0, 5).map((rec, i) => (
+            recommendations.filter(rec => rec && rec.trim() !== "**" && rec.trim() !== "***").slice(0, 5).map((rec, i) => (
               <div key={i} className="fd-insight-item fd-insight-item--manager">
                 <span className="fd-insight-num">{String(i + 1).padStart(2, "0")}</span>
                 <span>{rec}</span>
@@ -270,7 +276,7 @@ function InsightsTab({ report, advanced }) {
       )}
 
       {/* Business Questions */}
-      {business_questions && (
+      {business_questions && typeof business_questions === "string" && (
         <div className="fd-card">
           <h3 className="fd-card-title">❓ Business Questions This Data Can Answer</h3>
           <div className="fd-questions-list">
@@ -480,7 +486,13 @@ function ChatTab({ analysisId }) {
           {messages.map((m, i) => (
             <div key={i} className={`fd-msg fd-msg--${m.sender}`}>
               {m.sender === "ai" && <div className="fd-msg-avatar">🤖</div>}
-              <div className="fd-msg-bubble">{m.text}</div>
+              <div className="fd-msg-bubble">
+                {m.sender === "ai" ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+                ) : (
+                  m.text
+                )}
+              </div>
             </div>
           ))}
           {loading && (
