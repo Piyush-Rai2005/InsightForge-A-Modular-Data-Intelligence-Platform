@@ -226,7 +226,8 @@ def _build_report_payload(result: dict):
     return {
         "exec_summary": result.get("exec_summary", ""),
         "recommendations": [
-            x.strip() for x in (result.get("recommendations_text") or "").split("\n") if x.strip()
+            x.strip() for x in (result.get("recommendations_text") or "").split("\n")
+            if x.strip() and x.strip() not in ("**", "***", "---", "___")
         ],
         "best_model_name": result.get("best_model_name", "N/A") if not skip_ml else None,
         "best_model_accuracy": best_acc if not skip_ml else None,
@@ -289,6 +290,11 @@ async def analyze(
 
     analysis_id = str(uuid.uuid4())
 
+    # Save parquet for chat engine
+    os.makedirs("cache/data", exist_ok=True)
+    parquet_path = f"cache/data/{analysis_id}.parquet"
+    df.to_parquet(parquet_path, index=False)
+
     # Create session if authenticated
     if user:
         session = AnalysisSession(
@@ -336,6 +342,9 @@ async def job_result(
         if session:
             session.report_json = json.dumps(report, default=str)
             session.dashboard_json = json.dumps(dashboard, default=str)
+            session.health_report_json = json.dumps(result.get("health_report"), default=str)
+            session.trust_score_json = json.dumps(result.get("trust_score"), default=str)
+            session.advanced_insights_json = json.dumps(result.get("advanced_insights"), default=str)
             db.commit()
 
     return {
@@ -362,13 +371,23 @@ async def chat(body: ChatRequest):
     if cached:
         return cached
 
+    parquet_path = f"cache/data/{body.analysis_id}.parquet"
+    if not os.path.exists(parquet_path):
+        raise HTTPException(404, "Dataset not found. Please re-upload your file.")
+
     try:
-        from data_engine.query_engine import QueryEngine
-        qe = QueryEngine()
-        result = qe.query(body.question, body.analysis_id)
+        from data_engine.query_agent import QueryAgent
+        qa = QueryAgent(parquet_path=parquet_path)
+        answer = qa.run(body.question)
+
+        result = {"answer": answer}
         cache.set_json(cache_key, result, ttl=3600)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(500, f"Chat query failed: {e}")
 
 
@@ -411,6 +430,9 @@ async def get_session(
         "created_at": session.created_at.isoformat() if session.created_at else None,
         "report": json.loads(session.report_json) if session.report_json else None,
         "dashboard": json.loads(session.dashboard_json) if session.dashboard_json else None,
+        "health_report": json.loads(session.health_report_json) if getattr(session, 'health_report_json', None) else None,
+        "trust_score": json.loads(session.trust_score_json) if getattr(session, 'trust_score_json', None) else None,
+        "advanced_insights": json.loads(session.advanced_insights_json) if getattr(session, 'advanced_insights_json', None) else None,
         "chat_history": json.loads(session.chat_history) if session.chat_history else [],
     }
 
@@ -429,7 +451,29 @@ async def delete_session(
         raise HTTPException(404, "Session not found")
     db.delete(session)
     db.commit()
-    return {"status": "deleted"}
+    return {"message": "Session deleted"}
+
+
+class RenameSessionRequest(BaseModel):
+    name: str
+
+@app.patch("/sessions/{session_id}")
+async def rename_session(
+    session_id: str,
+    body: RenameSessionRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    session = db.query(AnalysisSession).filter(
+        AnalysisSession.id == session_id,
+        AnalysisSession.user_id == user.id
+    ).first()
+    if not session:
+        raise HTTPException(404, "Session not found")
+
+    session.filename = body.name
+    db.commit()
+    return {"message": "Session renamed", "new_name": body.name}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

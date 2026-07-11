@@ -26,6 +26,29 @@ export default function History() {
     setSessions((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const renameSession = async (id, currentName) => {
+    const newName = window.prompt("Enter new name for this analysis:", currentName);
+    if (!newName || newName === currentName) return;
+
+    try {
+      const res = await fetch(`${BASE_URL}/sessions/${id}`, {
+        method: "PATCH",
+        headers: {
+          ...authHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newName }),
+      });
+      if (res.ok) {
+        setSessions((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, filename: newName } : s))
+        );
+      }
+    } catch (e) {
+      console.error("Failed to rename session", e);
+    }
+  };
+
   if (loading) return <div className="history-loading">Loading sessions...</div>;
 
   return (
@@ -62,15 +85,28 @@ export default function History() {
                   </div>
                 )}
               </div>
-              <button
-                className="history-card-delete"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteSession(s.id);
-                }}
-              >
-                ✕
-              </button>
+              <div className="history-card-actions">
+                <button
+                  className="history-card-action-btn"
+                  title="Rename"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    renameSession(s.id, s.filename);
+                  }}
+                >
+                  ✎
+                </button>
+                <button
+                  className="history-card-action-btn delete"
+                  title="Delete"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteSession(s.id);
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           ))}
         </div>

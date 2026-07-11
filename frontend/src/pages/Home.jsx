@@ -9,9 +9,11 @@ export default function Home() {
   const { uploadFile, status, result, error, jobId } = useFileUpload();
   const { user } = useAuth();
   const [fileName, setFileName] = useState("");
+  const [dragging, setDragging] = useState(false);
 
   const handleDrop = (e) => {
     e.preventDefault();
+    setDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) {
       setFileName(file.name);
@@ -35,7 +37,11 @@ export default function Home() {
       {!hasResult ? (
         <div className="home-upload-section">
           <div className="hero-section">
-            <h1 className="hero-title">InsightForge</h1>
+            <div className="hero-badge">AI · Data Intelligence</div>
+            <h1 className="hero-title">
+              <span className="hero-text-white">Insight</span>
+              <span className="hero-text-accent">Forge</span>
+            </h1>
             <p className="hero-subtitle">Upload your data. Get instant business intelligence.</p>
           </div>
 
@@ -51,8 +57,9 @@ export default function Home() {
               <LoadingCard status={status} progress={status.progress} />
             ) : (
               <div
-                className="drop-zone"
-                onDragOver={(e) => e.preventDefault()}
+                className={`drop-zone${dragging ? " drag-over" : ""}`}
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
                 onDrop={handleDrop}
               >
                 <div className="dz-icon-wrap">

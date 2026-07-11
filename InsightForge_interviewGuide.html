@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsightForge — Interview-Ready Technical Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f111a;
+            --bg-secondary: #1a1d27;
+            --bg-tertiary: #252936;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #60a5fa;
+            --accent-tertiary: #93c5fd;
+            --border-color: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --sidebar-width: 300px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-primary); color: var(--text-primary); line-height: 1.7; display: flex; font-size: 15px; }
+        .sidebar { width: var(--sidebar-width); height: 100vh; background-color: var(--bg-secondary); border-right: 1px solid var(--border-color); position: fixed; top: 0; left: 0; overflow-y: auto; padding: 2rem 1rem; z-index: 100; }
+        .sidebar h2 { font-size: 1.1rem; color: var(--accent-primary); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1.5px; padding-left: 1rem; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { margin-bottom: 0.25rem; }
+        .sidebar a { color: var(--text-secondary); text-decoration: none; display: block; padding: 0.6rem 1rem; border-radius: 0.5rem; transition: all 0.2s ease; font-size: 0.88rem; font-weight: 500; }
+        .sidebar a:hover, .sidebar a.active { background-color: var(--bg-tertiary); color: var(--text-primary); border-left: 3px solid var(--accent-primary); padding-left: calc(1rem - 3px); }
+        .sidebar .section-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1.5px; padding: 1rem 1rem 0.3rem; opacity: 0.6; }
+        .content { margin-left: var(--sidebar-width); padding: 3rem 5rem; max-width: 1200px; width: calc(100% - var(--sidebar-width)); }
+        h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.6rem; margin-top: 3rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+        h3 { font-size: 1.2rem; margin-top: 2rem; margin-bottom: 0.75rem; color: var(--accent-secondary); }
+        h4 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-tertiary); }
+        p { margin-bottom: 1rem; color: var(--text-secondary); }
+        .subtitle { font-size: 1rem; color: var(--text-secondary); margin-bottom: 2.5rem; }
+        .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.75rem; }
+        code { font-family: 'JetBrains Mono', monospace; background: var(--bg-tertiary); padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.85em; color: var(--accent-tertiary); }
+        pre { background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1.25rem; overflow-x: auto; margin-bottom: 1.5rem; font-size: 0.82rem; line-height: 1.6; }
+        pre code { background: none; padding: 0; color: var(--text-primary); }
+        .diagram-container { background: #0d0f17; border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 2rem; margin: 1.5rem 0; overflow-x: auto; }
+        .diagram-container svg { display: block; margin: 0 auto; }
+        .diagram-label { text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.75rem; font-style: italic; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.88rem; }
+        th, td { padding: 0.65rem 1rem; text-align: left; border: 1px solid var(--border-color); }
+        th { background: var(--bg-tertiary); color: #fff; font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { color: var(--text-secondary); }
+        tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+        .tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 0.3rem; font-size: 0.75rem; font-weight: 600; margin-right: 0.4rem; margin-bottom: 0.3rem; }
+        .tag-blue   { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+        .tag-green  { background: rgba(16,185,129,0.15);  color: #10b981; }
+        .tag-yellow { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+        .tag-red    { background: rgba(239,68,68,0.15);   color: #ef4444; }
+        .tag-purple { background: rgba(167,139,250,0.15); color: #a78bfa; }
+        .tag-cyan   { background: rgba(6,182,212,0.15);   color: #06b6d4; }
+        .qa { margin-bottom: 1.25rem; }
+        .qa-q { font-weight: 700; color: #fff; margin-bottom: 0.35rem; font-size: 0.95rem; }
+        .qa-q::before { content: "Q: "; color: var(--accent-primary); }
+        .qa-a { color: var(--text-secondary); padding-left: 1.5rem; border-left: 2px solid var(--accent-primary); }
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; color: var(--text-secondary); }
+        li { margin-bottom: 0.3rem; }
+        .pipeline-step { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 0.5rem; background: var(--bg-tertiary); border-left: 3px solid var(--accent-primary); }
+        .pipeline-step .step-num { min-width: 28px; height: 28px; border-radius: 50%; background: var(--accent-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
+        .pipeline-step .step-body h4 { margin-top: 0; color: #fff; font-size: 0.95rem; }
+        .pipeline-step .step-body p  { margin-bottom: 0; font-size: 0.88rem; }
+        .highlight-box { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25); border-radius: 0.5rem; padding: 1rem 1.25rem; margin: 1rem 0; }
+        .new-badge { display: inline-block; background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4); border-radius: 0.25rem; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.4rem; margin-left: 0.5rem; vertical-align: middle; letter-spacing: 0.5px; }
+        @media (max-width: 900px) { .sidebar { display: none; } .content { margin-left: 0; padding: 2rem 1.5rem; } }
+    </style>
+</head>
+<body>
+<nav class="sidebar">
+    <h2>⚡ InsightForge</h2>
+    <ul>
+        <div class="section-label">Overview</div>
+        <li><a href="#overview">What is InsightForge?</a></li>
+        <li><a href="#tech-stack">Tech Stack</a></li>
+        <li><a href="#project-structure">Project Structure</a></li>
+        <div class="section-label">Architecture</div>
+        <li><a href="#system-design">System Design Diagram</a></li>
+        <li><a href="#flow-diagram">Application Flow Diagram</a></li>
+        <li><a href="#er-diagram">ER Diagram (Database)</a></li>
+        <div class="section-label">Deep Dives</div>
+        <li><a href="#api-routes">API Routes</a></li>
+        <li><a href="#agent-pipeline">10-Agent ML Pipeline</a></li>
+        <li><a href="#rag-layer">RAG Layer <span class="new-badge">NEW</span></a></li>
+        <li><a href="#chat-engine">Chat-with-Data Engine</a></li>
+        <li><a href="#geo-synonyms">Geographic Synonyms <span class="new-badge">NEW</span></a></li>
+        <li><a href="#auth-system">Auth & Security</a></li>
+        <li><a href="#caching">Caching Layer</a></li>
+        <li><a href="#job-system">Async Job System</a></li>
+        <li><a href="#exports">Export System</a></li>
+        <li><a href="#scheduler">Report Scheduler</a></li>
+        <li><a href="#frontend">Frontend Architecture</a></li>
+        <div class="section-label">Interview Prep</div>
+        <li><a href="#design-decisions">Design Decisions</a></li>
+        <li><a href="#interview-qa">Interview Q&A</a></li>
+        <li><a href="#how-to-explain">How to Explain in 2 Min</a></li>
+    </ul>
+</nav>
+
+<main class="content">
+
+<h1 id="overview">InsightForge — Interview-Ready Technical Guide</h1>
+<p class="subtitle">A Modular Data Intelligence Platform — sourced directly from the actual codebase, including all recent updates.</p>
+
+<div class="card">
+    <div class="card-title">One-Liner</div>
+    <p>InsightForge is a <strong>full-stack data intelligence platform</strong> where users upload any dataset (CSV, Excel, JSON, XML, YAML, Parquet, SQLite, ZIP), and a <strong>10-agent AI pipeline</strong> automatically performs data health checks, cleaning, schema analysis, ML model training, generates interactive Plotly visualizations, and produces a PDF report — all exposed via a FastAPI backend with JWT auth, a React + Vite frontend, a natural-language chat engine powered by DuckDB + Groq AI, a <strong>threshold-aware RAG layer</strong> (ChromaDB + MiniLM), and a <strong>geographic synonym system</strong> (US Census Bureau divisions) for precise regional queries.</p>
+</div>
+
+<!-- ════════════════════ TECH STACK ════════════════════ -->
+<h2 id="tech-stack">Tech Stack</h2>
+<table>
+    <tr><th>Layer</th><th>Technology</th><th>Why This Choice</th></tr>
+    <tr><td>Backend Framework</td><td><span class="tag tag-green">FastAPI</span> + Uvicorn</td><td>Async-first, auto OpenAPI docs, Pydantic validation</td></tr>
+    <tr><td>Frontend</td><td><span class="tag tag-blue">React 19</span> + Vite 8</td><td>Component-based SPA, fast HMR, React Router</td></tr>
+    <tr><td>AI / LLM</td><td><span class="tag tag-purple">Groq</span> (Llama 3.1 8B Instant)</td><td>~200ms inference, free tier, used for SQL gen, target detection, insight narratives</td></tr>
+    <tr><td>RAG Vector Store</td><td><span class="tag tag-cyan">ChromaDB</span> EphemeralClient</td><td>In-memory per-session column index; activates only when dataset > 20 columns</td></tr>
+    <tr><td>RAG Embeddings</td><td><span class="tag tag-cyan">all-MiniLM-L6-v2</span></td><td>80MB, process-level singleton, ~15ms per embedding; no GPU needed</td></tr>
+    <tr><td>ML Training</td><td><span class="tag tag-yellow">scikit-learn</span></td><td>Logistic Regression, Random Forest, Gradient Boosting + Ridge for regression</td></tr>
+    <tr><td>Database (App)</td><td><span class="tag tag-blue">SQLite</span> via SQLAlchemy ORM</td><td>Zero-config, swappable to PostgreSQL via DATABASE_URL</td></tr>
+    <tr><td>Chat Query Engine</td><td><span class="tag tag-green">DuckDB</span></td><td>In-process analytical SQL, reads Parquet natively, handles millions of rows</td></tr>
+    <tr><td>Caching</td><td><span class="tag tag-red">Redis</span> (in-memory fallback)</td><td>Job status + chat cache. Falls back to Python dict if Redis unavailable</td></tr>
+    <tr><td>Data Processing</td><td><span class="tag tag-yellow">Pandas</span> + <span class="tag tag-blue">Polars</span></td><td>Polars for HealthAgent (10–50× faster null counts); Pandas for ML pipeline</td></tr>
+    <tr><td>Visualization</td><td><span class="tag tag-purple">Plotly.js</span></td><td>Backend sends JSON spec → frontend renders interactive charts</td></tr>
+    <tr><td>PDF Reports</td><td><span class="tag tag-green">ReportLab</span></td><td>Programmatic PDF with tables, images, branded header</td></tr>
+    <tr><td>Auth</td><td><span class="tag tag-blue">JWT</span> (PyJWT) + <span class="tag tag-red">bcrypt</span></td><td>Stateless, 24h token expiry, HTTPBearer scheme</td></tr>
+    <tr><td>Scheduling</td><td><span class="tag tag-yellow">APScheduler</span></td><td>BackgroundScheduler with CronTrigger (daily/weekly/monthly)</td></tr>
+    <tr><td>Exports</td><td><span class="tag tag-purple">python-pptx</span> + <span class="tag tag-green">openpyxl</span></td><td>PowerPoint and Excel export from stored session JSON</td></tr>
+    <tr><td>Containerization</td><td><span class="tag tag-blue">Docker</span></td><td>python:3.12-slim base, single CMD: uvicorn api:app</td></tr>
+</table>
+
+<!-- ════════════════════ PROJECT STRUCTURE ════════════════════ -->
+<h2 id="project-structure">Project Structure</h2>
+<pre><code>InsightForge/
+├── api.py                       # FastAPI app — all routes + lifespan DB init
+├── Dockerfile                   # python:3.12-slim → uvicorn api:app
+├── requirements.txt             # 31+ dependencies
+├── .env                         # GROQ_API_KEY, DATABASE_URL, JWT_SECRET, REDIS_URL,
+│                                #   HF_HUB_DISABLE_IMPLICIT_TOKEN, TOKENIZERS_PARALLELISM
+│
+├── auth/
+│   ├── database.py              # SQLAlchemy engine, SessionLocal, get_db()
+│   ├── models.py                # User + AnalysisSession ORM models
+│   ├── security.py              # bcrypt hashing, JWT create/decode, Depends helpers
+│   └── routes.py                # /auth/register, /auth/login, /auth/me
+│
+├── core/
+│   └── coordinator.py           # PipelineCoordinator — runs 10 agents sequentially
+│
+├── agents/
+│   ├── base_agent.py            # BaseAgent ABC with log() and run() interface
+│   ├── health_agent.py          # Trust score, completeness, duplicates, outliers (Polars)
+│   ├── data_agent.py            # NaN handling, encoding, ID dropping
+│   ├── schema_insight_agent.py  # Column semantics, auto Plotly charts, business Qs (Groq)
+│   │                            #   ↳ CREATES RAGRetriever → stored in context["rag_retriever"]
+│   ├── target_agent.py          # ML target detection (keyword + Groq AI)
+│   │                            #   ↳ USES context["rag_retriever"] for schema_info
+│   ├── feature_agent.py         # Correlation heatmap (top 10 features vs target)
+│   ├── model_agent.py           # Train 3–4 models, Plotly bar chart, leakage check
+│   ├── evaluation_agent.py      # Confusion matrix, ROC curve, target distribution
+│   ├── insight_agent.py         # Exec summary + recommendations (Groq AI)
+│   │                            #   ↳ USES context["rag_retriever"] for schema
+│   ├── advanced_insights_agent.py # Temporal trends, anomaly detection (3σ), what-if
+│   └── report_agent.py          # ReportLab PDF generation
+│
+├── data_engine/
+│   ├── query_agent.py           # Chat engine — DuckDB + RAG + Groq + geo synonyms
+│   │                            #   ↳ 4-tier: RAG SQL → Groq SQL → pattern match → stats
+│   ├── vector_store.py          # SessionVectorStore (ChromaDB EphemeralClient + MiniLM)
+│   │                            #   ↳ _MODEL singleton: loaded once per server process
+│   ├── rag_retriever.py         # RAGRetriever: threshold=20, wraps vector_store
+│   ├── query_engine.py          # (legacy stub) bare DuckDB wrapper — unused in production
+│   └── schema.py                # (legacy stub) Polars schema→JSON — unused in production
+│
+├── jobs/
+│   └── task_runner.py           # dispatch_pipeline() — threading.Thread + cache updates
+│
+├── cache/
+│   └── redis_cache.py           # _Cache class — Redis primary, dict fallback
+│
+├── exports/
+│   ├── pptx_exporter.py         # python-pptx slide deck
+│   └── excel_exporter.py        # openpyxl 6-sheet workbook
+│
+├── scheduler/
+│   └── report_scheduler.py      # APScheduler BackgroundScheduler
+│
+└── frontend/
+    └── src/
+        ├── App.jsx              # React Router: /, /login, /history, /dashboard/:id
+        ├── InsightForge.jsx     # Main page: upload, progress, report, chat
+        ├── context/AuthContext.jsx
+        ├── hooks/useFileUpload.js, useChat.js
+        └── services/chatService.js
+</code></pre>
+
+<!-- ════════════════════ SYSTEM DESIGN ════════════════════ -->
+<h2 id="system-design">System Design Diagram</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 760" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#60a5fa"/>
+    </marker>
+    <marker id="arr-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#10b981"/>
+    </marker>
+    <marker id="arr-cyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#06b6d4"/>
+    </marker>
+    <marker id="arr-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#a78bfa"/>
+    </marker>
+  </defs>
+  <rect width="1100" height="760" fill="#0d0f17" rx="8"/>
+  <text x="550" y="26" fill="#60a5fa" font-size="13" font-weight="700" text-anchor="middle">INSIGHTFORGE — SYSTEM DESIGN (Updated with RAG + Geo Synonym Layer)</text>
+
+  <!-- Browser -->
+  <rect x="20" y="240" width="120" height="80" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="80" y="268" fill="#e2e8f0" font-size="11" font-weight="600" text-anchor="middle">Browser</text>
+  <text x="80" y="284" fill="#94a3b8" font-size="8.5" text-anchor="middle">React 19 + Vite 8</text>
+  <text x="80" y="298" fill="#94a3b8" font-size="8.5" text-anchor="middle">Plotly.js Charts</text>
+  <line x1="140" y1="280" x2="185" y2="280" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="162" y="272" fill="#60a5fa" font-size="7" text-anchor="middle">HTTP/REST</text>
+
+  <!-- FastAPI Box -->
+  <rect x="185" y="45" width="245" height="570" rx="8" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="4"/>
+  <text x="308" y="63" fill="#60a5fa" font-size="10" font-weight="600" text-anchor="middle">FASTAPI SERVER (api.py)</text>
+
+  <rect x="198" y="75" width="220" height="50" rx="5" fill="#1e293b" stroke="#10b981" stroke-width="1"/>
+  <text x="308" y="95" fill="#10b981" font-size="9" font-weight="600" text-anchor="middle">Auth Router (/auth)</text>
+  <text x="308" y="110" fill="#94a3b8" font-size="7.5" text-anchor="middle">register · login · me · JWT + bcrypt</text>
+
+  <rect x="198" y="135" width="220" height="45" rx="5" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+  <text x="308" y="153" fill="#f59e0b" font-size="9" font-weight="600" text-anchor="middle">POST /analyze</text>
+  <text x="308" y="168" fill="#94a3b8" font-size="7.5" text-anchor="middle">parse_upload() → dispatch_pipeline()</text>
+
+  <rect x="198" y="190" width="220" height="45" rx="5" fill="#1e293b" stroke="#a78bfa" stroke-width="1"/>
+  <text x="308" y="208" fill="#a78bfa" font-size="9" font-weight="600" text-anchor="middle">GET /jobs/{id}/status · result</text>
+  <text x="308" y="223" fill="#94a3b8" font-size="7.5" text-anchor="middle">Poll progress → fetch results</text>
+
+  <rect x="198" y="245" width="220" height="60" rx="5" fill="#1e293b" stroke="#06b6d4" stroke-width="1"/>
+  <text x="308" y="263" fill="#06b6d4" font-size="9" font-weight="600" text-anchor="middle">POST /chat</text>
+  <text x="308" y="277" fill="#94a3b8" font-size="7.5" text-anchor="middle">QueryAgent (RAG + DuckDB + Groq</text>
+  <text x="308" y="290" fill="#94a3b8" font-size="7.5" text-anchor="middle">+ Geographic Synonym Layer)</text>
+
+  <rect x="198" y="315" width="220" height="50" rx="5" fill="#1e293b" stroke="#ec4899" stroke-width="1"/>
+  <text x="308" y="333" fill="#ec4899" font-size="9" font-weight="600" text-anchor="middle">Sessions CRUD + Export</text>
+  <text x="308" y="348" fill="#94a3b8" font-size="7.5" text-anchor="middle">list · get · delete · rename · export</text>
+
+  <rect x="198" y="375" width="220" height="40" rx="5" fill="#1e293b" stroke="#84cc16" stroke-width="1"/>
+  <text x="308" y="395" fill="#84cc16" font-size="9" font-weight="600" text-anchor="middle">Schedule Routes</text>
+  <text x="308" y="408" fill="#94a3b8" font-size="7.5" text-anchor="middle">POST/DELETE /sessions/{id}/schedule</text>
+
+  <rect x="198" y="425" width="220" height="55" rx="5" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+  <text x="308" y="443" fill="#f59e0b" font-size="9" font-weight="600" text-anchor="middle">parse_upload()</text>
+  <text x="308" y="458" fill="#94a3b8" font-size="7.5" text-anchor="middle">CSV · XLSX · JSON · XML · YAML</text>
+  <text x="308" y="471" fill="#94a3b8" font-size="7.5" text-anchor="middle">Parquet · SQLite · TSV · ZIP</text>
+
+  <rect x="198" y="490" width="220" height="30" rx="5" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="308" y="509" fill="#94a3b8" font-size="8" text-anchor="middle">GET /health → {"status": "ok"}</text>
+
+  <!-- Background Thread -->
+  <rect x="455" y="100" width="240" height="220" rx="8" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4"/>
+  <text x="575" y="118" fill="#f59e0b" font-size="10" font-weight="600" text-anchor="middle">BACKGROUND THREAD (jobs/)</text>
+
+  <rect x="468" y="128" width="215" height="38" rx="5" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+  <text x="575" y="146" fill="#e2e8f0" font-size="9" font-weight="600" text-anchor="middle">PipelineCoordinator (core/)</text>
+  <text x="575" y="160" fill="#94a3b8" font-size="7.5" text-anchor="middle">Runs 10 agents sequentially</text>
+
+  <rect x="468" y="175" width="215" height="130" rx="5" fill="#1e293b" stroke="#a78bfa" stroke-width="1"/>
+  <text x="575" y="193" fill="#a78bfa" font-size="9" font-weight="600" text-anchor="middle">10 Agents (agents/)</text>
+  <text x="480" y="210" fill="#94a3b8" font-size="7.5">1. HealthAgent (Polars)        6. ModelAgent</text>
+  <text x="480" y="224" fill="#94a3b8" font-size="7.5">2. DataAgent                  7. EvaluationAgent</text>
+  <text x="480" y="238" fill="#06b6d4" font-size="7.5">3. SchemaInsight → RAGRetriever</text>
+  <text x="480" y="252" fill="#06b6d4" font-size="7.5">4. Target ← uses RAGRetriever 9. AdvancedInsights</text>
+  <text x="480" y="266" fill="#94a3b8" font-size="7.5">5. FeatureAgent               10. ReportAgent</text>
+  <text x="480" y="280" fill="#06b6d4" font-size="7.5">8. Insight ← uses RAGRetriever</text>
+
+  <line x1="430" y1="160" x2="468" y2="160" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="449" y="153" fill="#f59e0b" font-size="7" text-anchor="middle">dispatch</text>
+
+  <!-- RAG Layer Box (NEW) -->
+  <rect x="455" y="340" width="240" height="130" rx="8" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4"/>
+  <text x="575" y="358" fill="#06b6d4" font-size="10" font-weight="700" text-anchor="middle">RAG LAYER (data_engine/) ✦ NEW</text>
+
+  <rect x="468" y="368" width="215" height="38" rx="5" fill="#1e293b" stroke="#06b6d4" stroke-width="1"/>
+  <text x="575" y="384" fill="#06b6d4" font-size="9" font-weight="600" text-anchor="middle">RAGRetriever</text>
+  <text x="575" y="398" fill="#94a3b8" font-size="7.5" text-anchor="middle">threshold=20 · wraps SessionVectorStore</text>
+
+  <rect x="468" y="415" width="215" height="45" rx="5" fill="#1e293b" stroke="#06b6d4" stroke-width="1"/>
+  <text x="575" y="432" fill="#06b6d4" font-size="9" font-weight="600" text-anchor="middle">SessionVectorStore</text>
+  <text x="575" y="446" fill="#94a3b8" font-size="7.5" text-anchor="middle">ChromaDB EphemeralClient</text>
+  <text x="575" y="458" fill="#94a3b8" font-size="7.5" text-anchor="middle">all-MiniLM-L6-v2 (singleton)</text>
+
+  <!-- Arrow: Agents → RAG -->
+  <line x1="575" y1="305" x2="575" y2="340" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+  <text x="592" y="328" fill="#06b6d4" font-size="7">creates/uses</text>
+
+  <!-- Data Stores -->
+  <!-- SQLite -->
+  <rect x="455" y="495" width="115" height="65" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="512" y="518" fill="#3b82f6" font-size="10" font-weight="600" text-anchor="middle">SQLite</text>
+  <text x="512" y="532" fill="#94a3b8" font-size="7.5" text-anchor="middle">insightforge.db</text>
+  <text x="512" y="545" fill="#94a3b8" font-size="7" text-anchor="middle">Users + Sessions</text>
+  <text x="512" y="555" fill="#94a3b8" font-size="7" text-anchor="middle">(SQLAlchemy ORM)</text>
+
+  <!-- Redis -->
+  <rect x="580" y="495" width="115" height="65" rx="8" fill="#1e293b" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="637" y="518" fill="#ef4444" font-size="10" font-weight="600" text-anchor="middle">Redis</text>
+  <text x="637" y="532" fill="#94a3b8" font-size="7.5" text-anchor="middle">Job Status Cache</text>
+  <text x="637" y="545" fill="#94a3b8" font-size="7" text-anchor="middle">Chat Cache</text>
+  <text x="637" y="555" fill="#94a3b8" font-size="7" text-anchor="middle">(dict fallback)</text>
+
+  <!-- Parquet -->
+  <rect x="455" y="575" width="115" height="55" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+  <text x="512" y="598" fill="#10b981" font-size="10" font-weight="600" text-anchor="middle">Parquet</text>
+  <text x="512" y="612" fill="#94a3b8" font-size="7.5" text-anchor="middle">cache/data/{id}</text>
+  <text x="512" y="622" fill="#94a3b8" font-size="7" text-anchor="middle">uploaded datasets</text>
+
+  <!-- DuckDB -->
+  <rect x="580" y="575" width="115" height="55" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="637" y="598" fill="#06b6d4" font-size="10" font-weight="600" text-anchor="middle">DuckDB</text>
+  <text x="637" y="612" fill="#94a3b8" font-size="7.5" text-anchor="middle">In-process SQL</text>
+  <text x="637" y="622" fill="#94a3b8" font-size="7" text-anchor="middle">reads Parquet</text>
+
+  <!-- Arrows to data stores -->
+  <line x1="430" y1="330" x2="512" y2="495" stroke="#3b82f6" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="430" y1="330" x2="637" y2="495" stroke="#ef4444" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="430" y1="295" x2="512" y2="575" stroke="#10b981" stroke-width="1" marker-end="url(#arr)" stroke-dasharray="3"/>
+  <line x1="512" y1="630" x2="637" y2="595" stroke="#06b6d4" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="637" y1="575" x2="575" y2="460" stroke="#06b6d4" stroke-width="1" marker-end="url(#arr-cyan)" stroke-dasharray="3"/>
+
+  <!-- External Services -->
+  <rect x="760" y="100" width="155" height="60" rx="8" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="837" y="125" fill="#a78bfa" font-size="10" font-weight="600" text-anchor="middle">Groq AI (LLM)</text>
+  <text x="837" y="142" fill="#94a3b8" font-size="8" text-anchor="middle">Llama 3.1 8B Instant</text>
+
+  <!-- Geo Synonym Box (NEW) -->
+  <rect x="760" y="180" width="155" height="75" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="837" y="200" fill="#f59e0b" font-size="9" font-weight="700" text-anchor="middle">Geo Synonym Dict ✦ NEW</text>
+  <text x="837" y="215" fill="#94a3b8" font-size="7.5" text-anchor="middle">20 Census division aliases</text>
+  <text x="837" y="228" fill="#94a3b8" font-size="7.5" text-anchor="middle">50 state full names + abbrevs</text>
+  <text x="837" y="241" fill="#94a3b8" font-size="7.5" text-anchor="middle">Sniffs column format at init</text>
+
+  <rect x="760" y="275" width="155" height="70" rx="8" fill="#1e293b" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="837" y="296" fill="#ec4899" font-size="10" font-weight="600" text-anchor="middle">Export Engine</text>
+  <text x="837" y="311" fill="#94a3b8" font-size="8" text-anchor="middle">PDF (ReportLab)</text>
+  <text x="837" y="324" fill="#94a3b8" font-size="8" text-anchor="middle">PPTX (python-pptx)</text>
+  <text x="837" y="337" fill="#94a3b8" font-size="8" text-anchor="middle">XLSX (openpyxl)</text>
+
+  <rect x="760" y="365" width="155" height="55" rx="8" fill="#1e293b" stroke="#84cc16" stroke-width="1.5"/>
+  <text x="837" y="388" fill="#84cc16" font-size="10" font-weight="600" text-anchor="middle">APScheduler</text>
+  <text x="837" y="403" fill="#94a3b8" font-size="8" text-anchor="middle">CronTrigger</text>
+  <text x="837" y="416" fill="#94a3b8" font-size="7" text-anchor="middle">daily / weekly / monthly</text>
+
+  <!-- Arrows to external -->
+  <line x1="695" y1="240" x2="760" y2="135" stroke="#a78bfa" stroke-width="1" marker-end="url(#arr-purple)"/>
+  <line x1="430" y1="260" x2="760" y2="210" stroke="#f59e0b" stroke-width="1" marker-end="url(#arr)"/>
+  <text x="590" y="225" fill="#f59e0b" font-size="7">inject synonym</text>
+  <line x1="430" y1="340" x2="760" y2="305" stroke="#ec4899" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="430" y1="405" x2="760" y2="385" stroke="#84cc16" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Legend -->
+  <rect x="20" y="640" width="1060" height="100" rx="6" fill="#1e293b" stroke="#334155" stroke-width="0.5"/>
+  <text x="40" y="658" fill="#60a5fa" font-size="9" font-weight="600">DB / CACHE CONNECTIONS:</text>
+  <circle cx="45" cy="674" r="4" fill="#3b82f6"/><text x="55" y="678" fill="#94a3b8" font-size="7.5">SQLite (insightforge.db) — Users, Sessions, Reports via SQLAlchemy ORM</text>
+  <circle cx="45" cy="691" r="4" fill="#ef4444"/><text x="55" y="695" fill="#94a3b8" font-size="7.5">Redis (localhost:6379) — job:{id}:status · job:{id}:result · chat:{id}:{q}  (TTL 600s/3600s) — dict fallback if Redis absent</text>
+  <circle cx="45" cy="708" r="4" fill="#10b981"/><text x="55" y="712" fill="#94a3b8" font-size="7.5">Parquet (cache/data/{id}.parquet) — raw uploaded dataset, DuckDB queries + MiniLM indexing (head-500 for embedding)</text>
+  <circle cx="45" cy="725" r="4" fill="#06b6d4"/><text x="55" y="729" fill="#94a3b8" font-size="7.5">ChromaDB EphemeralClient (in-memory) — per-session column index; activated only when dataset &gt; 20 columns; GC'd when QueryAgent drops</text>
+</svg>
+</div>
+<p class="diagram-label">System Design — Draw left-to-right: Browser → FastAPI → Background Thread (10 Agents + RAG) → Data Stores → External Services</p>
+
+<!-- ════════════════════ FLOW DIAGRAM ════════════════════ -->
+<h2 id="flow-diagram">Application Flow Diagram</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1080 680" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+  <defs>
+    <marker id="fa" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#60a5fa"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="680" fill="#0d0f17" rx="8"/>
+  <text x="540" y="26" fill="#60a5fa" font-size="13" font-weight="700" text-anchor="middle">APPLICATION FLOW — USER JOURNEY (with RAG + Geo Synonym Layer)</text>
+
+  <!-- Phase 1: Upload -->
+  <rect x="20" y="50" width="190" height="185" rx="8" fill="none" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4"/>
+  <text x="115" y="69" fill="#3b82f6" font-size="10" font-weight="700" text-anchor="middle">① UPLOAD</text>
+  <rect x="32" y="80" width="166" height="28" rx="4" fill="#1e293b" stroke="#3b82f6" stroke-width="1"/>
+  <text x="115" y="98" fill="#e2e8f0" font-size="8.5" text-anchor="middle">User uploads file</text>
+  <line x1="115" y1="108" x2="115" y2="120" stroke="#3b82f6" stroke-width="1" marker-end="url(#fa)"/>
+  <rect x="32" y="120" width="166" height="28" rx="4" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+  <text x="115" y="138" fill="#f59e0b" font-size="8.5" text-anchor="middle">parse_upload() → DataFrame</text>
+  <line x1="115" y1="148" x2="115" y2="162" stroke="#3b82f6" stroke-width="1" marker-end="url(#fa)"/>
+  <rect x="32" y="162" width="166" height="40" rx="4" fill="#1e293b" stroke="#10b981" stroke-width="1"/>
+  <text x="115" y="178" fill="#10b981" font-size="8" text-anchor="middle">Save .parquet (for chat/RAG)</text>
+  <text x="115" y="192" fill="#10b981" font-size="8" text-anchor="middle">Create AnalysisSession (DB)</text>
+
+  <line x1="210" y1="155" x2="230" y2="155" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#fa)"/>
+
+  <!-- Phase 2: Pipeline + RAG -->
+  <rect x="230" y="50" width="300" height="400" rx="8" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4"/>
+  <text x="380" y="69" fill="#f59e0b" font-size="10" font-weight="700" text-anchor="middle">② BACKGROUND PIPELINE (10 Agents)</text>
+
+  <rect x="242" y="80" width="276" height="20" rx="3" fill="#1e293b" stroke="#10b981" stroke-width="0.8"/>
+  <text x="380" y="94" fill="#10b981" font-size="7.5" text-anchor="middle">1. HealthAgent → trust score (Polars: 10–50× faster than Pandas)</text>
+  <rect x="242" y="104" width="276" height="20" rx="3" fill="#1e293b" stroke="#10b981" stroke-width="0.8"/>
+  <text x="380" y="118" fill="#e2e8f0" font-size="7.5" text-anchor="middle">2. DataAgent → clean, encode, drop IDs</text>
+
+  <!-- RAG creation step highlighted -->
+  <rect x="242" y="128" width="276" height="28" rx="3" fill="#0d2137" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="380" y="143" fill="#06b6d4" font-size="7.5" font-weight="600" text-anchor="middle">3. SchemaInsightAgent → CREATE RAGRetriever</text>
+  <text x="380" y="153" fill="#94a3b8" font-size="7" text-anchor="middle">if cols &gt; 20: index all cols via MiniLM → ChromaDB</text>
+
+  <rect x="242" y="160" width="276" height="28" rx="3" fill="#0d2137" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="380" y="175" fill="#06b6d4" font-size="7.5" font-weight="600" text-anchor="middle">4. TargetAgent → USE RAGRetriever (or direct)</text>
+  <text x="380" y="185" fill="#94a3b8" font-size="7" text-anchor="middle">query: "prediction target outcome binary label"</text>
+
+  <!-- Decision -->
+  <polygon points="380,207 418,222 380,237 342,222" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+  <text x="380" y="226" fill="#f59e0b" font-size="8" text-anchor="middle">ML?</text>
+  <line x1="418" y1="222" x2="438" y2="222" stroke="#10b981" stroke-width="1"/>
+  <text x="430" y="216" fill="#10b981" font-size="7">Yes</text>
+  <rect x="438" y="208" width="66" height="28" rx="3" fill="#1e293b" stroke="#10b981" stroke-width="0.8"/>
+  <text x="471" y="220" fill="#10b981" font-size="7" text-anchor="middle">5. Feature</text>
+  <text x="471" y="230" fill="#10b981" font-size="7" text-anchor="middle">6. Model</text>
+  <line x1="380" y1="237" x2="380" y2="250" stroke="#ef4444" stroke-width="1"/>
+  <text x="392" y="246" fill="#ef4444" font-size="7">No → EDA</text>
+
+  <rect x="242" y="255" width="276" height="20" rx="3" fill="#1e293b" stroke="#10b981" stroke-width="0.8"/>
+  <text x="380" y="269" fill="#e2e8f0" font-size="7.5" text-anchor="middle">7. EvaluationAgent → confusion matrix, ROC</text>
+
+  <rect x="242" y="279" width="276" height="28" rx="3" fill="#0d2137" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="380" y="294" fill="#06b6d4" font-size="7.5" font-weight="600" text-anchor="middle">8. InsightAgent → USE RAGRetriever (or direct)</text>
+  <text x="380" y="304" fill="#94a3b8" font-size="7" text-anchor="middle">query: "key metrics business outcome indicators"</text>
+
+  <rect x="242" y="311" width="276" height="20" rx="3" fill="#1e293b" stroke="#10b981" stroke-width="0.8"/>
+  <text x="380" y="325" fill="#e2e8f0" font-size="7.5" text-anchor="middle">9. AdvancedInsightsAgent → anomalies, trends, what-if</text>
+  <rect x="242" y="335" width="276" height="20" rx="3" fill="#1e293b" stroke="#ec4899" stroke-width="0.8"/>
+  <text x="380" y="349" fill="#ec4899" font-size="7.5" text-anchor="middle">10. ReportAgent → generate PDF (ReportLab)</text>
+
+  <rect x="242" y="365" width="276" height="30" rx="3" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="0.8"/>
+  <text x="380" y="380" fill="#ef4444" font-size="8" text-anchor="middle">↻ Each step updates Redis: job:{id}:status</text>
+  <text x="380" y="392" fill="#94a3b8" font-size="7" text-anchor="middle">Frontend polls GET /jobs/{id}/status (progress bar)</text>
+
+  <line x1="530" y1="200" x2="555" y2="200" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#fa)"/>
+
+  <!-- Phase 3: Results -->
+  <rect x="555" y="50" width="215" height="265" rx="8" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="4"/>
+  <text x="662" y="69" fill="#10b981" font-size="10" font-weight="700" text-anchor="middle">③ RESULTS</text>
+  <rect x="568" y="80" width="190" height="30" rx="4" fill="#1e293b" stroke="#10b981" stroke-width="1"/>
+  <text x="663" y="95" fill="#e2e8f0" font-size="8.5" text-anchor="middle">GET /jobs/{id}/result</text>
+  <text x="663" y="108" fill="#94a3b8" font-size="7" text-anchor="middle">_build_report_payload()</text>
+  <line x1="663" y1="110" x2="663" y2="122" stroke="#10b981" stroke-width="1" marker-end="url(#fa)"/>
+  <rect x="568" y="122" width="190" height="55" rx="4" fill="#1e293b" stroke="#3b82f6" stroke-width="1"/>
+  <text x="663" y="139" fill="#3b82f6" font-size="8.5" font-weight="600" text-anchor="middle">JSON payload:</text>
+  <text x="663" y="153" fill="#94a3b8" font-size="7" text-anchor="middle">report · dashboard · health</text>
+  <text x="663" y="165" fill="#94a3b8" font-size="7" text-anchor="middle">trust_score · advanced_insights</text>
+  <line x1="663" y1="177" x2="663" y2="190" stroke="#10b981" stroke-width="1" marker-end="url(#fa)"/>
+  <rect x="568" y="190" width="190" height="28" rx="4" fill="#1e293b" stroke="#3b82f6" stroke-width="1"/>
+  <text x="663" y="208" fill="#3b82f6" font-size="8" text-anchor="middle">Persist to AnalysisSession (SQLite)</text>
+  <line x1="663" y1="218" x2="663" y2="232" stroke="#10b981" stroke-width="1" marker-end="url(#fa)"/>
+  <rect x="568" y="232" width="190" height="36" rx="4" fill="#1e293b" stroke="#a78bfa" stroke-width="1"/>
+  <text x="663" y="248" fill="#a78bfa" font-size="8" font-weight="600" text-anchor="middle">Frontend renders:</text>
+  <text x="663" y="261" fill="#94a3b8" font-size="7" text-anchor="middle">Plotly charts · KPIs · Health · Report</text>
+
+  <!-- Phase 4: Chat + RAG -->
+  <rect x="555" y="330" width="215" height="165" rx="8" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4"/>
+  <text x="662" y="350" fill="#06b6d4" font-size="10" font-weight="700" text-anchor="middle">④ CHAT + RAG ✦ NEW</text>
+  <rect x="568" y="360" width="190" height="24" rx="3" fill="#1e293b" stroke="#06b6d4" stroke-width="0.8"/>
+  <text x="663" y="376" fill="#e2e8f0" font-size="8" text-anchor="middle">User: "Sales from Pacific coast?"</text>
+  <line x1="663" y1="384" x2="663" y2="396" stroke="#06b6d4" stroke-width="1" marker-end="url(#fa)"/>
+  <rect x="568" y="396" width="190" height="28" rx="3" fill="#0d2137" stroke="#f59e0b" stroke-width="1"/>
+  <text x="663" y="411" fill="#f59e0b" font-size="8" font-weight="600" text-anchor="middle">Geo Synonym: "pacific coast" →</text>
+  <text x="663" y="421" fill="#94a3b8" font-size="7" text-anchor="middle">State IN ('California', 'Oregon', ...)</text>
+  <line x1="663" y1="424" x2="663" y2="436" stroke="#06b6d4" stroke-width="1" marker-end="url(#fa)"/>
+  <rect x="568" y="436" width="190" height="24" rx="3" fill="#0d2137" stroke="#06b6d4" stroke-width="1"/>
+  <text x="663" y="450" fill="#06b6d4" font-size="7.5" text-anchor="middle">RAG: cols&gt;20 → retrieve top-12 cols</text>
+  <line x1="663" y1="460" x2="663" y2="472" stroke="#06b6d4" stroke-width="1" marker-end="url(#fa)"/>
+  <rect x="568" y="472" width="190" height="18" rx="3" fill="#1e293b" stroke="#a78bfa" stroke-width="0.8"/>
+  <text x="663" y="484" fill="#a78bfa" font-size="7.5" text-anchor="middle">Groq → SQL → DuckDB → answer</text>
+
+  <!-- Phase 5: Export -->
+  <rect x="800" y="50" width="265" height="200" rx="8" fill="none" stroke="#ec4899" stroke-width="1" stroke-dasharray="4"/>
+  <text x="932" y="69" fill="#ec4899" font-size="10" font-weight="700" text-anchor="middle">⑤ EXPORT & SCHEDULE</text>
+  <rect x="812" y="80" width="242" height="25" rx="4" fill="#1e293b" stroke="#ec4899" stroke-width="0.8"/>
+  <text x="933" y="97" fill="#ec4899" font-size="8" text-anchor="middle">GET /sessions/{id}/export?format=pdf</text>
+  <rect x="812" y="113" width="72" height="22" rx="4" fill="#1e293b" stroke="#ef4444" stroke-width="0.8"/>
+  <text x="848" y="128" fill="#e2e8f0" font-size="8" text-anchor="middle">PDF</text>
+  <rect x="895" y="113" width="72" height="22" rx="4" fill="#1e293b" stroke="#f59e0b" stroke-width="0.8"/>
+  <text x="931" y="128" fill="#e2e8f0" font-size="8" text-anchor="middle">PPTX</text>
+  <rect x="978" y="113" width="66" height="22" rx="4" fill="#1e293b" stroke="#10b981" stroke-width="0.8"/>
+  <text x="1011" y="128" fill="#e2e8f0" font-size="8" text-anchor="middle">XLSX</text>
+  <rect x="812" y="147" width="242" height="25" rx="4" fill="#1e293b" stroke="#84cc16" stroke-width="0.8"/>
+  <text x="933" y="163" fill="#84cc16" font-size="8" text-anchor="middle">POST /sessions/{id}/schedule</text>
+  <rect x="812" y="182" width="242" height="40" rx="4" fill="#1e293b" stroke="#84cc16" stroke-width="0.8"/>
+  <text x="933" y="199" fill="#94a3b8" font-size="8" text-anchor="middle">APScheduler CronTrigger</text>
+  <text x="933" y="214" fill="#94a3b8" font-size="7" text-anchor="middle">daily(8AM) · weekly(Mon) · monthly(1st)</text>
+  <line x1="770" y1="150" x2="812" y2="110" stroke="#ec4899" stroke-width="1" marker-end="url(#fa)"/>
+
+  <!-- RAG key note -->
+  <rect x="800" y="265" width="265" height="135" rx="6" fill="#1e293b" stroke="#06b6d4" stroke-width="1"/>
+  <text x="820" y="283" fill="#06b6d4" font-size="9" font-weight="600">RAG THRESHOLD RULE:</text>
+  <text x="820" y="300" fill="#94a3b8" font-size="8">≤ 20 cols → full schema direct, zero overhead</text>
+  <text x="820" y="315" fill="#94a3b8" font-size="8">&gt; 20 cols → MiniLM embeds question,</text>
+  <text x="820" y="328" fill="#94a3b8" font-size="8">  retrieves top-k relevant columns only</text>
+  <text x="820" y="345" fill="#f59e0b" font-size="9" font-weight="600">GEO SYNONYM RULE:</text>
+  <text x="820" y="362" fill="#94a3b8" font-size="8">Detects alias on __init__ (one DuckDB query)</text>
+  <text x="820" y="377" fill="#94a3b8" font-size="8">Sniffs: full name / abbreviation / region label</text>
+  <text x="820" y="392" fill="#94a3b8" font-size="8">Injects SQL hint before Groq writes SQL</text>
+</svg>
+</div>
+<p class="diagram-label">Flow Diagram — Highlighted in cyan: the new RAG layer and geographic synonym injection points</p>
+
+<!-- ════════════════════ ER DIAGRAM ════════════════════ -->
+<h2 id="er-diagram">ER Diagram (Database Schema)</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+  <rect width="900" height="400" fill="#0d0f17" rx="8"/>
+  <text x="450" y="28" fill="#60a5fa" font-size="13" font-weight="700" text-anchor="middle">ER DIAGRAM — insightforge.db (SQLite via SQLAlchemy ORM)</text>
+  <rect x="50" y="55" width="300" height="210" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <rect x="50" y="55" width="300" height="35" rx="8" fill="#3b82f6"/>
+  <rect x="50" y="75" width="300" height="15" fill="#3b82f6"/>
+  <text x="200" y="78" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">users</text>
+  <text x="70" y="115" fill="#f59e0b" font-size="11" font-weight="600">🔑 id</text>
+  <text x="285" y="115" fill="#94a3b8" font-size="10" text-anchor="end">String (UUID) PK</text>
+  <line x1="65" y1="125" x2="335" y2="125" stroke="#334155" stroke-width="0.5"/>
+  <text x="70" y="145" fill="#e2e8f0" font-size="10">email</text>
+  <text x="285" y="145" fill="#94a3b8" font-size="10" text-anchor="end">String UNIQUE NOT NULL</text>
+  <line x1="65" y1="155" x2="335" y2="155" stroke="#334155" stroke-width="0.5"/>
+  <text x="70" y="175" fill="#e2e8f0" font-size="10">hashed_password</text>
+  <text x="285" y="175" fill="#94a3b8" font-size="10" text-anchor="end">String NOT NULL (bcrypt)</text>
+  <line x1="65" y1="185" x2="335" y2="185" stroke="#334155" stroke-width="0.5"/>
+  <text x="70" y="205" fill="#e2e8f0" font-size="10">display_name</text>
+  <text x="285" y="205" fill="#94a3b8" font-size="10" text-anchor="end">String nullable</text>
+  <line x1="65" y1="215" x2="335" y2="215" stroke="#334155" stroke-width="0.5"/>
+  <text x="70" y="235" fill="#e2e8f0" font-size="10">created_at</text>
+  <text x="285" y="235" fill="#94a3b8" font-size="10" text-anchor="end">DateTime</text>
+  <line x1="350" y1="115" x2="500" y2="115" stroke="#f59e0b" stroke-width="2"/>
+  <text x="425" y="108" fill="#f59e0b" font-size="10" font-weight="600" text-anchor="middle">1 ──── N</text>
+  <text x="425" y="135" fill="#94a3b8" font-size="8.5" text-anchor="middle">cascade delete-orphan</text>
+  <circle cx="350" cy="115" r="4" fill="#f59e0b"/>
+  <circle cx="500" cy="115" r="4" fill="none" stroke="#f59e0b" stroke-width="2"/>
+  <circle cx="500" cy="115" r="2" fill="#f59e0b"/>
+  <rect x="500" y="55" width="350" height="330" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+  <rect x="500" y="55" width="350" height="35" rx="8" fill="#10b981"/>
+  <rect x="500" y="75" width="350" height="15" fill="#10b981"/>
+  <text x="675" y="78" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">analysis_sessions</text>
+  <text x="520" y="115" fill="#f59e0b" font-size="11" font-weight="600">🔑 id</text>
+  <text x="783" y="115" fill="#94a3b8" font-size="10" text-anchor="end">String (UUID) PK</text>
+  <line x1="515" y1="125" x2="835" y2="125" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="145" fill="#ef4444" font-size="10">🔗 user_id</text>
+  <text x="783" y="145" fill="#94a3b8" font-size="10" text-anchor="end">String FK → users.id</text>
+  <line x1="515" y1="155" x2="835" y2="155" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="175" fill="#e2e8f0" font-size="10">filename</text>
+  <text x="783" y="175" fill="#94a3b8" font-size="10" text-anchor="end">String NOT NULL</text>
+  <line x1="515" y1="185" x2="835" y2="185" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="205" fill="#e2e8f0" font-size="10">created_at</text>
+  <text x="783" y="205" fill="#94a3b8" font-size="10" text-anchor="end">DateTime</text>
+  <line x1="515" y1="215" x2="835" y2="215" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="235" fill="#60a5fa" font-size="10">report_json</text>
+  <text x="783" y="235" fill="#94a3b8" font-size="10" text-anchor="end">Text (JSON blob)</text>
+  <line x1="515" y1="245" x2="835" y2="245" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="265" fill="#60a5fa" font-size="10">dashboard_json</text>
+  <text x="783" y="265" fill="#94a3b8" font-size="10" text-anchor="end">Text (JSON blob)</text>
+  <line x1="515" y1="275" x2="835" y2="275" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="295" fill="#60a5fa" font-size="10">health_report_json</text>
+  <text x="783" y="295" fill="#94a3b8" font-size="10" text-anchor="end">Text (JSON blob)</text>
+  <line x1="515" y1="305" x2="835" y2="305" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="325" fill="#60a5fa" font-size="10">trust_score_json</text>
+  <text x="783" y="325" fill="#94a3b8" font-size="10" text-anchor="end">Text (JSON blob)</text>
+  <line x1="515" y1="335" x2="835" y2="335" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="355" fill="#60a5fa" font-size="10">advanced_insights_json</text>
+  <text x="783" y="355" fill="#94a3b8" font-size="10" text-anchor="end">Text (JSON blob)</text>
+  <line x1="515" y1="365" x2="835" y2="365" stroke="#334155" stroke-width="0.5"/>
+  <text x="520" y="385" fill="#e2e8f0" font-size="10">chat_history / schedule_frequency</text>
+</svg>
+</div>
+<p class="diagram-label">ER Diagram — 2 tables: users (1) ←→ (N) analysis_sessions. RAG index is ephemeral (not persisted to DB).</p>
+
+<!-- ════════════════════ API ROUTES ════════════════════ -->
+<h2 id="api-routes">API Routes</h2>
+<table>
+    <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>What It Does</th></tr>
+    <tr><td><span class="tag tag-green">POST</span></td><td><code>/auth/register</code></td><td>No</td><td>bcrypt hash → create User → return JWT</td></tr>
+    <tr><td><span class="tag tag-green">POST</span></td><td><code>/auth/login</code></td><td>No</td><td>Verify credentials → return JWT (24h expiry)</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td><code>/auth/me</code></td><td>Yes</td><td>Return current user (id, email, display_name)</td></tr>
+    <tr><td><span class="tag tag-green">POST</span></td><td><code>/analyze</code></td><td>Optional</td><td>parse_upload → save .parquet → dispatch_pipeline → return job_id</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td><code>/jobs/{id}/status</code></td><td>No</td><td>Poll Redis for pipeline progress (step name, %)</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td><code>/jobs/{id}/result</code></td><td>Optional</td><td>Fetch completed payload, persist to DB, return JSON</td></tr>
+    <tr><td><span class="tag tag-green">POST</span></td><td><code>/chat</code></td><td>No</td><td>QueryAgent: Geo synonyms → RAG schema → Groq SQL → DuckDB → answer</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td><code>/sessions</code></td><td>Yes</td><td>List all sessions for current user</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td><code>/sessions/{id}</code></td><td>Yes</td><td>Full session detail (all JSON blobs)</td></tr>
+    <tr><td><span class="tag tag-red">DELETE</span></td><td><code>/sessions/{id}</code></td><td>Yes</td><td>Delete session</td></tr>
+    <tr><td><span class="tag tag-yellow">PATCH</span></td><td><code>/sessions/{id}</code></td><td>Yes</td><td>Rename session</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td><code>/sessions/{id}/export</code></td><td>Yes</td><td>?format=pdf|pptx|xlsx</td></tr>
+    <tr><td><span class="tag tag-green">POST</span></td><td><code>/sessions/{id}/schedule</code></td><td>Yes</td><td>Create APScheduler CronTrigger</td></tr>
+    <tr><td><span class="tag tag-red">DELETE</span></td><td><code>/sessions/{id}/schedule</code></td><td>Yes</td><td>Cancel scheduled report</td></tr>
+    <tr><td><span class="tag tag-blue">GET</span></td><td><code>/health</code></td><td>No</td><td>{"status": "ok", "version": "2.0.0"}</td></tr>
+</table>
+
+<!-- ════════════════════ AGENT PIPELINE ════════════════════ -->
+<h2 id="agent-pipeline">The 10-Agent ML Pipeline</h2>
+<p>Each agent extends <code>BaseAgent</code> with <code>run(context) → context</code>. A shared <code>context</code> dict accumulates state as it flows through all 10 agents. Non-critical agents are wrapped in try/except — pipeline continues on failure. Agents 3, 4, and 8 now interact with the RAG layer.</p>
+
+<div class="pipeline-step"><div class="step-num">1</div><div class="step-body"><h4>HealthAgent</h4><p>Uses <strong>Polars</strong> for performance. Checks completeness, duplicates, consistency (IQR outliers >5%). Computes <strong>Trust Score (0–100)</strong>: completeness 40pts + duplicates 30pts + consistency 30pts.</p></div></div>
+<div class="pipeline-step"><div class="step-num">2</div><div class="step-body"><h4>DataAgent</h4><p>Strips whitespace, drops 100% NaN rows/cols, coerces object→numeric (≥70% parse). Mean-imputes numerics, mode-imputes categoricals. Smart encoding: drops ID-like cols (>95% unique), label-encodes high-cardinality (>50), one-hot encodes low-cardinality.</p></div></div>
+<div class="pipeline-step" style="border-left-color:#06b6d4"><div class="step-num" style="background:#06b6d4">3</div><div class="step-body"><h4>SchemaInsightAgent <span class="tag tag-cyan">RAG Creator</span> <span class="tag tag-purple">Groq AI</span></h4><p><strong>Creates the RAGRetriever</strong>: <code>RAGRetriever(df)</code> — if dataset has >20 columns, indexes all columns into ChromaDB using MiniLM embeddings and stores it in <code>context["rag_retriever"]</code> for reuse. Then detects column semantics (date, monetary, rating, etc.), generates data-specific Plotly charts, and asks Groq for 5 business questions using RAG-retrieved schema (not just the first 20 columns).</p></div></div>
+<div class="pipeline-step" style="border-left-color:#06b6d4"><div class="step-num" style="background:#06b6d4">4</div><div class="step-body"><h4>TargetAgent <span class="tag tag-cyan">RAG Consumer</span> <span class="tag tag-purple">Groq AI</span></h4><p><strong>Uses RAGRetriever</strong> from context if available. Queries: <em>"prediction target outcome binary classification label churn fraud"</em> → retrieves the most target-like column names instead of blindly slicing <code>columns[:15]</code>. This means a <code>churn_flag</code> column at index 45 is now surfaced correctly. Detects data leakage (>0.95 correlation with target).</p></div></div>
+<div class="pipeline-step"><div class="step-num">5</div><div class="step-body"><h4>FeatureAgent</h4><p>Skipped if <code>skip_ml=True</code>. Correlation heatmap (Matplotlib/Seaborn) for top 10 features vs target.</p></div></div>
+<div class="pipeline-step"><div class="step-num">6</div><div class="step-body"><h4>ModelAgent</h4><p>Samples to 2000 rows, applies StandardScaler. Classification: Logistic Regression + Random Forest + Gradient Boosting. Regression: Linear + Ridge + Random Forest + Gradient Boosting. Produces Plotly JSON bar chart. Flags leakage if accuracy > 97%.</p></div></div>
+<div class="pipeline-step"><div class="step-num">7</div><div class="step-body"><h4>EvaluationAgent</h4><p>Target distribution plot, confusion matrix heatmap, ROC curve + AUC (binary classification). All saved as PNGs in <code>outputs/</code>.</p></div></div>
+<div class="pipeline-step" style="border-left-color:#06b6d4"><div class="step-num" style="background:#06b6d4">8</div><div class="step-body"><h4>InsightAgent <span class="tag tag-cyan">RAG Consumer</span> <span class="tag tag-purple">Groq AI</span></h4><p><strong>Uses RAGRetriever</strong> from context. Queries: <em>"key metrics business outcome important factors performance indicators"</em> — semantically different from TargetAgent's query, so retrieves a different column subset on wide datasets. Generates executive summary + 5 recommendations + 2 discovery insights (ML mode) or EDA business intelligence narrative (EDA mode).</p></div></div>
+<div class="pipeline-step"><div class="step-num">9</div><div class="step-body"><h4>AdvancedInsightsAgent</h4><p>Temporal trends (MoM growth), anomaly detection (3σ Z-scores), sensitivity/what-if analysis (correlation-based projections). Uses Pandas + Polars.</p></div></div>
+<div class="pipeline-step"><div class="step-num">10</div><div class="step-body"><h4>ReportAgent</h4><p>Multi-page ReportLab PDF: branded header, exec summary, describe table, model comparison, visual insights (heatmap, confusion matrix, ROC), recommendations.</p></div></div>
+
+<!-- ════════════════════ RAG LAYER (NEW) ════════════════════ -->
+<h2 id="rag-layer">RAG Layer <span class="new-badge">NEW</span></h2>
+<p>InsightForge uses a <strong>threshold-aware Retrieval-Augmented Generation</strong> system to improve LLM prompt quality on wide datasets. It does NOT use RAG for small datasets — this is a deliberate design decision.</p>
+
+<div class="card">
+    <div class="card-title">The Core Rule — One Constant Controls Everything</div>
+    <pre><code># data_engine/vector_store.py
+COLUMN_RAG_THRESHOLD = 20   # change once → affects all agents + QueryAgent</code></pre>
+    <table>
+        <tr><th>Dataset Size</th><th>RAG Active?</th><th>Behaviour</th><th>Overhead</th></tr>
+        <tr><td>≤ 20 columns</td><td>❌ OFF</td><td>Full schema sent directly to LLM — same as before</td><td>Zero</td></tr>
+        <tr><td>> 20 columns</td><td>✅ ON</td><td>Question embedded → top-k columns retrieved → focused prompt</td><td>~15ms per embed</td></tr>
+    </table>
+</div>
+
+<h3>Architecture — 3 Files, Clean Separation</h3>
+
+<div class="card">
+    <div class="card-title">vector_store.py — SessionVectorStore</div>
+    <ul>
+        <li><strong>ChromaDB EphemeralClient</strong> — purely in-memory, zero disk writes, auto-GC'd when the object is dropped</li>
+        <li><strong>Process-level model singleton</strong> — <code>_get_model()</code> loads <code>all-MiniLM-L6-v2</code> once per server process (not per request). "Loading weights 103/103" appears exactly once at startup.</li>
+        <li><strong>Column document format</strong>: <code>"Column: {name} | Type: {dtype} | Samples: {top3_values}"</code> — sample values give MiniLM semantic signal beyond the column name (e.g. <em>"Male, Female, Non-binary"</em> identifies a gender column even if named <code>col_42</code>)</li>
+        <li><strong>Cosine similarity</strong> (<code>{"hnsw:space": "cosine"}</code>) for the ChromaDB collection</li>
+    </ul>
+</div>
+
+<div class="card">
+    <div class="card-title">rag_retriever.py — RAGRetriever</div>
+    <p>The single wrapper that all agents and QueryAgent use. Hides the threshold logic so agents never check column counts themselves.</p>
+    <pre><code>retriever = RAGRetriever(df)                   # checks threshold in __init__
+schema = retriever.get_schema(question, k=12)  # RAG or full — same API call</code></pre>
+    <ul>
+        <li><code>get_schema(question, k)</code> — returns formatted schema text for LLM prompt injection</li>
+        <li><code>get_column_names(question, k)</code> — returns list of column names for custom use</li>
+        <li>Each agent uses a <strong>semantically different query string</strong> to retrieve domain-appropriate columns</li>
+    </ul>
+</div>
+
+<h3>How Each Agent Uses RAG</h3>
+<table>
+    <tr><th>Agent</th><th>Role</th><th>Query String Used</th><th>k</th></tr>
+    <tr><td>SchemaInsightAgent</td><td>Creates retriever</td><td>"business analysis overview key metrics important columns schema"</td><td>20</td></tr>
+    <tr><td>TargetAgent</td><td>Consumes retriever</td><td>"prediction target outcome binary classification label churn fraud"</td><td>20</td></tr>
+    <tr><td>InsightAgent</td><td>Consumes retriever</td><td>"key metrics business outcome important factors performance indicators"</td><td>20</td></tr>
+    <tr><td>QueryAgent (chat)</td><td>Creates its own</td><td>The user's literal question (per-question retrieval)</td><td>12</td></tr>
+</table>
+
+<h3>Why Not Always Use RAG?</h3>
+<p>For datasets with ≤ 20 columns, the full schema is short enough to fit in any LLM context window. Adding RAG would mean: loading ChromaDB + running MiniLM embeddings (~15–50ms) to retrieve... all 20 columns anyway. That's pure overhead with zero quality gain. The threshold is the right engineering call.</p>
+
+<!-- ════════════════════ CHAT ENGINE ════════════════════ -->
+<h2 id="chat-engine">Chat-with-Data Engine</h2>
+
+<div class="card">
+    <div class="card-title">QueryAgent — 4-Tier Architecture (updated)</div>
+    <ol>
+        <li><strong>Geo Synonym Injection</strong> (pre-processing): Detects regional aliases in the question (<em>"Pacific coast", "Midwest", "New England"</em>), resolves them to exact column values for THIS dataset, injects a "fact sheet" into the system prompt before the LLM writes SQL. Always runs — returns <code>""</code> if no alias detected (zero overhead).</li>
+        <li><strong>Tier 1 — RAG + Groq AI (best quality)</strong>: If dataset > 20 cols, embeds question → retrieves top-12 relevant column names → builds focused schema → sends to Groq → Groq generates DuckDB SQL → executes → Groq interprets result.</li>
+        <li><strong>Tier 2 — Local Pattern Matching</strong>: Regex detects intent (top/best, average, sum, distribution, correlation, what-if, show data) → generates SQL locally → DuckDB → formatted markdown table. No API call.</li>
+        <li><strong>Tier 3 — Smart Fallback</strong>: Finds closest column via word-overlap scoring → returns stats for that column. Never returns empty.</li>
+    </ol>
+</div>
+
+<h3>SQL Sanitisation</h3>
+<pre><code># After Groq responds, before DuckDB execution:
+sql = sql.replace("```sql", "").replace("```", "").strip()
+# DuckDB uses "Column" (double-quote), not `Column` (backtick/MySQL).
+# Llama occasionally outputs MySQL-style backticks — this converts them:
+sql = re.sub(r'`([^`]+)`', r'"\1"', sql)
+</code></pre>
+
+<!-- ════════════════════ GEO SYNONYMS (NEW) ════════════════════ -->
+<h2 id="geo-synonyms">Geographic Synonym Layer <span class="new-badge">NEW</span></h2>
+
+<div class="card">
+    <div class="card-title">Problem Solved</div>
+    <p>When a user asks <em>"sales from the Pacific coast"</em>, the LLM would generate <code>WHERE Region = 'Pacific'</code> — but the Superstore dataset has <code>WHERE "State" IN ('California', 'Oregon', ...)</code>. The SQL ran successfully but returned 0 rows → sum() = NaN. The geo synonym layer solves this permanently.</p>
+</div>
+
+<h3>Three-Step Implementation</h3>
+<p><strong>Step 1 — Static dictionary</strong> (module-level, <code>_GEO_SYNONYMS</code>): 20 aliases covering all US Census Bureau divisions. Keys are lowercase aliases; values are full state names.</p>
+<pre><code>"pacific coast":    ["California", "Oregon", "Washington", "Alaska", "Hawaii"],
+"pacific division": ["California", "Oregon", "Washington", "Alaska", "Hawaii"],
+"midwest":          ["Illinois", "Indiana", "Iowa", "Kansas", "Michigan", ...],
+"new england":      ["Connecticut", "Maine", "Massachusetts", ...],
+"east coast":       ["Maine", "New Hampshire", ..., "Florida"],
+# + 15 more divisions/regions</code></pre>
+
+<p><strong>Step 2 — Format detection at init</strong> (<code>_detect_geo_column()</code>): Runs once per QueryAgent instantiation (one DuckDB DISTINCT query). Finds the geographic column by scanning column names for "state", "province", "region", etc. Then checks 30 sample values:</p>
+<table>
+    <tr><th>If values look like...</th><th>Detected format</th><th>Expansion used</th></tr>
+    <tr><td>"California", "Texas"</td><td><code>full</code></td><td>Full state names</td></tr>
+    <tr><td>"CA", "TX"</td><td><code>abbrev</code></td><td>2-letter codes (via <code>_STATE_ABBREVS</code>)</td></tr>
+    <tr><td>"West", "South"</td><td><code>region</code></td><td>Full state names (LLM matches via sample data)</td></tr>
+</table>
+
+<p><strong>Step 3 — System prompt injection</strong> (<code>_build_geo_context(question)</code>): Called per question. Returns <code>""</code> if no alias detected (zero overhead for non-geographic questions). When an alias IS detected, injects this before the LLM writes SQL:</p>
+<pre><code>Geographic synonym mappings for this dataset:
+ - 'pacific coast' → "State" IN ('California', 'Oregon', 'Washington', 'Alaska', 'Hawaii')
+Use these exact column values when writing your SQL WHERE clause.</code></pre>
+
+<h3>Result for the failing query</h3>
+<pre><code># Before: Groq wrote this → returned NaN
+SELECT SUM(`Sales`) FROM data WHERE "Region" = 'Pacific'
+
+# After: Groq receives the synonym hint → writes correct SQL
+SELECT SUM("Sales") FROM data
+WHERE "State" IN ('California', 'Oregon', 'Washington', 'Alaska', 'Hawaii')
+-- Returns: actual number ✅</code></pre>
+
+<!-- ════════════════════ AUTH ════════════════════ -->
+<h2 id="auth-system">Auth & Security</h2>
+<div class="card">
+    <div class="card-title">JWT + bcrypt Authentication</div>
+    <table>
+        <tr><th>Component</th><th>Implementation</th></tr>
+        <tr><td>Password Hashing</td><td><code>bcrypt.hashpw()</code> with auto-generated salt</td></tr>
+        <tr><td>Token Format</td><td>JWT HS256: <code>{sub: user_id, exp: now+24h}</code></td></tr>
+        <tr><td>Auth Scheme</td><td><code>HTTPBearer(auto_error=False)</code></td></tr>
+        <tr><td>get_current_user</td><td>FastAPI Depends() → decode JWT → query User → 401 if invalid</td></tr>
+        <tr><td>get_current_user_optional</td><td>Same but returns <code>None</code> on /analyze and /jobs</td></tr>
+        <tr><td>Session Isolation</td><td>All session queries filter by <code>user_id == current_user.id</code></td></tr>
+    </table>
+</div>
+
+<!-- ════════════════════ CACHING ════════════════════ -->
+<h2 id="caching">Caching Layer</h2>
+<div class="card">
+    <div class="card-title">Redis with In-Memory Fallback</div>
+    <table>
+        <tr><th>Cache Key</th><th>Purpose</th><th>TTL</th></tr>
+        <tr><td><code>job:{id}:status</code></td><td>Pipeline progress (status, step, %)</td><td>600s</td></tr>
+        <tr><td><code>job:{id}:result</code></td><td>Completed pipeline results</td><td>3600s</td></tr>
+        <tr><td><code>chat:{analysis_id}:{question}</code></td><td>Chat response cache</td><td>3600s</td></tr>
+    </table>
+    <p>The <code>_Cache</code> class tries Redis at startup. If <code>ping()</code> fails, it silently falls back to a Python dict. The warning was downgraded from <code>WARNING</code> to <code>INFO</code> level so it's not alarming in dev.</p>
+</div>
+
+<!-- ════════════════════ JOB SYSTEM ════════════════════ -->
+<h2 id="job-system">Async Job System</h2>
+<div class="card">
+    <div class="card-title">Background Thread Execution</div>
+    <ol>
+        <li><code>dispatch_pipeline(df, analysis_id)</code> → sets status "queued" → starts <code>threading.Thread(daemon=True)</code></li>
+        <li>Thread runs <code>PipelineCoordinator.run(df, on_step=callback)</code></li>
+        <li>Each agent step → callback updates Redis: <code>{"status": "running", "step": "ModelAgent", "progress": 0.6}</code></li>
+        <li>On completion → status="done", results in <code>_results</code> dict</li>
+        <li>Frontend polls <code>GET /jobs/{id}/status</code> → progress bar</li>
+        <li><code>GET /jobs/{id}/result</code> pops results (one-time fetch) → persists to SQLite</li>
+    </ol>
+</div>
+
+<!-- ════════════════════ EXPORTS ════════════════════ -->
+<h2 id="exports">Export System</h2>
+<table>
+    <tr><th>Format</th><th>Module</th><th>Details</th></tr>
+    <tr><td><span class="tag tag-red">PDF</span></td><td>agents/report_agent.py</td><td>ReportLab — branded header, exec summary, describe table, model comparison, visuals, recommendations</td></tr>
+    <tr><td><span class="tag tag-yellow">PPTX</span></td><td>exports/pptx_exporter.py</td><td>python-pptx — Title, Exec Summary, Model Performance, Recommendations slides</td></tr>
+    <tr><td><span class="tag tag-green">XLSX</span></td><td>exports/excel_exporter.py</td><td>openpyxl — 6 sheets: Overview, Models, Missing Values, Recommendations, Key Stats, Summary</td></tr>
+</table>
+
+<!-- ════════════════════ SCHEDULER ════════════════════ -->
+<h2 id="scheduler">Report Scheduler</h2>
+<div class="card">
+    <div class="card-title">APScheduler CronTrigger</div>
+    <table>
+        <tr><th>Frequency</th><th>CronTrigger</th><th>When</th></tr>
+        <tr><td>daily</td><td><code>CronTrigger(hour=8, minute=0)</code></td><td>Every day at 8:00 AM</td></tr>
+        <tr><td>weekly</td><td><code>CronTrigger(day_of_week="mon", hour=8)</code></td><td>Every Monday at 8:00 AM</td></tr>
+        <tr><td>monthly</td><td><code>CronTrigger(day=1, hour=8)</code></td><td>1st of every month at 8:00 AM</td></tr>
+    </table>
+</div>
+
+<!-- ════════════════════ FRONTEND ════════════════════ -->
+<h2 id="frontend">Frontend Architecture</h2>
+<div class="card">
+    <div class="card-title">React 19 + Vite 8 SPA</div>
+    <table>
+        <tr><th>Layer</th><th>File</th><th>Purpose</th></tr>
+        <tr><td>Entry</td><td>main.jsx → App.jsx</td><td>React Router: /, /login, /history, /dashboard/:id</td></tr>
+        <tr><td>Main Page</td><td>InsightForge.jsx</td><td>File upload, progress bar, tabbed report view, chat panel</td></tr>
+        <tr><td>Auth</td><td>context/AuthContext.jsx</td><td>React Context + localStorage for JWT</td></tr>
+        <tr><td>Hooks</td><td>hooks/useFileUpload.js</td><td>Upload file, poll job status, fetch results</td></tr>
+        <tr><td>Hooks</td><td>hooks/useChat.js</td><td>Chat messages, conversation history</td></tr>
+        <tr><td>Services</td><td>services/chatService.js</td><td>API client for POST /chat</td></tr>
+        <tr><td>Charts</td><td>plotly.js-dist-min</td><td>Renders Plotly JSON specs (interactive, dark-themed)</td></tr>
+        <tr><td>Markdown</td><td>react-markdown + remark-gfm</td><td>Renders AI chat responses with tables</td></tr>
+    </table>
+</div>
+
+<!-- ════════════════════ DESIGN DECISIONS ════════════════════ -->
+<h2 id="design-decisions">Key Design Decisions</h2>
+<div class="card">
+    <div class="card-title">Why These Choices?</div>
+    <table>
+        <tr><th>Decision</th><th>Alternatives</th><th>Why This?</th></tr>
+        <tr><td>RAG threshold at 20 cols</td><td>Always use RAG / Never use RAG</td><td>Below 20: full schema fits in any context window, RAG adds overhead with zero gain. Above 20: focused prompts improve SQL accuracy + speed.</td></tr>
+        <tr><td>ChromaDB EphemeralClient</td><td>Persistent ChromaDB, Pinecone, pgvector</td><td>No disk I/O, no port, GC'd automatically. The Parquet file is already persisted — no need to persist the index separately.</td></tr>
+        <tr><td>MiniLM singleton pattern</td><td>Load per-request / preload at startup</td><td>Lazy load on first use (avoids cold-start cost if feature not used), reused forever after (no per-request overhead). 80MB stays in RAM.</td></tr>
+        <tr><td>System prompt injection for geo</td><td>SQL pre-rewriting</td><td>The LLM already knows the column name from the schema. Injecting a fact sheet lets it write the complete correct SQL — we don't need to parse/rewrite partial SQL ourselves.</td></tr>
+        <tr><td>Backtick→double-quote sanitisation</td><td>Instruct LLM to use double quotes</td><td>Instruction 4 in the prompt already says "wrap in double quotes" but Llama still uses backticks ~10% of the time. The regex fix is a deterministic safety net.</td></tr>
+        <tr><td>SQLite + JSON blobs</td><td>PostgreSQL + normalized tables</td><td>Zero-config for dev. JSON blobs avoid 10+ tables for variable-depth reports. Swappable via DATABASE_URL.</td></tr>
+        <tr><td>Background threads (not Celery)</td><td>Celery + Redis broker</td><td>Single-server simplicity. Celery in requirements.txt for future migration.</td></tr>
+        <tr><td>Groq (Llama 3.1 8B)</td><td>OpenAI GPT-4, Gemini</td><td>Free tier, ~200ms inference, no billing surprises.</td></tr>
+        <tr><td>Redis with dict fallback</td><td>Redis only</td><td>Developers without Redis can run the app instantly. Downgraded connection-fail log to INFO level.</td></tr>
+    </table>
+</div>
+
+<!-- ════════════════════ INTERVIEW Q&A ════════════════════ -->
+<h2 id="interview-qa">Interview Q&A</h2>
+
+<div class="qa">
+    <div class="qa-q">Walk me through what happens when a user uploads a CSV.</div>
+    <div class="qa-a">POST multipart to <code>/analyze</code>. <code>parse_upload()</code> detects extension, uses charset_normalizer to detect encoding, reads into Pandas DataFrame. Saved as Parquet for chat/RAG. If authenticated, an AnalysisSession row is created in SQLite. <code>dispatch_pipeline()</code> launches a daemon thread and returns <code>job_id</code> immediately. Frontend polls <code>GET /jobs/{id}/status</code> (Redis) for progress. When done, <code>GET /jobs/{id}/result</code> returns the full JSON payload which is also persisted to SQLite.</div>
+</div>
+
+<div class="qa">
+    <div class="qa-q">What is RAG and how do you use it in InsightForge?</div>
+    <div class="qa-a">RAG = Retrieval-Augmented Generation. Normally you'd embed documents and retrieve relevant chunks before sending to an LLM. Here I apply the same idea to dataset columns: instead of dumping all 60+ column names into a Groq prompt, I embed the user's question with MiniLM (80MB model), query a ChromaDB index of embedded column descriptions, retrieve the top-12 most relevant columns, and send only those. This gives the LLM a focused, accurate schema — fewer hallucinated column names, faster API calls, and correct SQL on wide datasets. The key design decision is the threshold: RAG only activates for datasets with more than 20 columns. Below that, the full schema is short enough to send directly — adding RAG would just be overhead.</div>
+</div>
+
+<div class="qa">
+    <div class="qa-q">Why use an ephemeral ChromaDB instead of a persistent vector store?</div>
+    <div class="qa-a">The column index only needs to exist for the duration of a chat session. The actual dataset is already persisted as a Parquet file. Using <code>EphemeralClient()</code> means no disk I/O, no port to manage, and the index is automatically garbage-collected when the QueryAgent object drops. If we wanted persistence, we'd just re-index from the Parquet file — it takes ~100ms for 200 columns. There's no value in persisting an index that can be rebuilt instantly from the source data.</div>
+</div>
+
+<div class="qa">
+    <div class="qa-q">How does the geographic synonym layer work?</div>
+    <div class="qa-a">Three steps. First, a static dictionary maps 20 US Census Bureau division aliases to lists of state names — authored once, never changes. Second, when QueryAgent initializes, it runs one DuckDB <code>DISTINCT</code> query to sample 30 values from the geographic column and determines if the dataset uses full names ("California"), abbreviations ("CA"), or region labels ("West"). Third, before each Groq SQL call, <code>_build_geo_context(question)</code> scans the question for any known alias. If "pacific coast" is found, it injects a paragraph into the system prompt: <em>"'pacific coast' → State IN ('California', 'Oregon', 'Washington', 'Alaska', 'Hawaii')"</em>. The LLM reads this and uses the exact IN clause. For non-geographic questions, the function returns an empty string — zero overhead.</div>
+</div>
+
+<div class="qa">
+    <div class="qa-q">What was the Pacific coast NaN bug and how did you fix it?</div>
+    <div class="qa-a">Two bugs in one error. Bug 1: the LLM wrote <code>WHERE Region = 'Pacific'</code> but the Superstore dataset has a <em>State</em> column with full state names like "California", not a Region column with "Pacific". The SQL ran, returned 0 rows, and <code>SUM()</code> of an empty set is NULL/NaN. Fix: geographic synonym injection so the LLM writes <code>WHERE State IN ('California', ...)</code>. Bug 2: Llama-3.1 sometimes outputs MySQL-style backtick quoting — <code>SUM(`Sales`)</code> — which DuckDB cannot parse (it throws "Scalar Function __postfix does not exist"). Fix: one regex line after receiving the LLM response: <code>sql = re.sub(r'`([^`]+)`', r'"\\1"', sql)</code>.</div>
+</div>
+
+<div class="qa">
+    <div class="qa-q">Why does the SentenceTransformer model show "Loading weights 103/103" on startup?</div>
+    <div class="qa-a">The all-MiniLM-L6-v2 model is ~80MB and stored in the local HuggingFace cache after first download. The progress bar is from sentence_transformers loading the 103 weight shards from disk. The original bug was that <code>SentenceTransformer("all-MiniLM-L6-v2")</code> was being instantiated inside <code>SessionVectorStore.__init__()</code> — meaning it reloaded from disk on every chat request. The fix: a module-level singleton <code>_MODEL</code> with a <code>_get_model()</code> lazy loader. Now it loads once per server process, and all SessionVectorStore instances share the same object. The "unauthenticated HF Hub" warning is suppressed via <code>HF_HUB_DISABLE_IMPLICIT_TOKEN=1</code> in <code>.env</code>.</div>
+</div>
+
+<div class="qa">
+    <div class="qa-q">How does the pipeline decide ML vs EDA?</div>
+    <div class="qa-a">TargetAgent (step 4) makes the decision. First checks keyword matches (churn, fraud, survived…) across all column names. If none match, uses RAGRetriever (if >20 cols) to retrieve the most target-like columns, then asks Groq AI: "Is there a meaningful prediction target?" with schema + sample. If the AI returns a valid column that passes quality checks (2–20 unique values, not an ID, &lt;80% unique ratio), ML proceeds. Otherwise <code>skip_ml=True</code> is set in the context dict and agents 5–7 skip. InsightAgent then switches to EDA-only narrative mode.</div>
+</div>
+
+<div class="qa">
+    <div class="qa-q">What's your scaling strategy?</div>
+    <div class="qa-a">Incremental. Step 1: SQLite → PostgreSQL (change DATABASE_URL, SQLAlchemy abstracts it). Step 2: threads → Celery workers (already in requirements.txt). Step 3: Parquet files → S3/GCS with a storage abstraction. Step 4: FastAPI is stateless (JWT auth) so it scales horizontally once the in-memory <code>_results</code> dict moves to Redis. The RAG layer scales naturally — each ChromaDB EphemeralClient is per-request and in-memory, so horizontal scaling just means each instance has its own index (which is fine, re-indexing from Parquet takes ~100ms).</div>
+</div>
+
+<!-- ════════════════════ 2-MINUTE PITCH ════════════════════ -->
+<h2 id="how-to-explain">How to Explain InsightForge in 2 Minutes</h2>
+<div class="highlight-box">
+    <p><strong>"InsightForge is a full-stack data intelligence platform.</strong></p>
+    <p><strong>The problem:</strong> Non-technical teams waste hours in Excel. Data scientists spend 80% of their time on cleaning and setup, not insights.</p>
+    <p><strong>Core flow:</strong> You upload any dataset — CSV, Excel, SQLite, even ZIP files — and a 10-agent AI pipeline automatically cleans the data, detects whether ML is appropriate, trains multiple models, generates interactive Plotly charts, and writes an executive summary with business recommendations. It produces a PDF report you can hand to your manager, plus PPTX and Excel exports.</p>
+    <p><strong>The smart part:</strong> A TargetAgent uses Groq AI to evaluate whether the data has a meaningful prediction target. If it's just a customer list or transaction log, it switches to pure EDA mode — business intelligence insights instead of garbage predictions.</p>
+    <p><strong>Chat with your data:</strong> Ask natural language questions like "What are Pacific coast sales?" The system has a geographic synonym layer that knows "Pacific coast" = California, Oregon, Washington, Alaska, Hawaii — it injects this into the LLM prompt so the SQL is always correct. For wide datasets (50+ columns), we use a RAG layer: embed the question with MiniLM, retrieve only the relevant columns from ChromaDB, send a focused schema to the LLM — faster and more accurate than dumping 60 columns into the prompt.</p>
+    <p><strong>Tech stack:</strong> FastAPI + React 19 + Vite, SQLite (swappable to PostgreSQL), Redis caching with in-memory fallback, JWT auth, APScheduler for recurring reports, ChromaDB + all-MiniLM-L6-v2 for RAG, DuckDB for in-process analytical SQL. Runs as a single Docker container."</p>
+</div>
+
+</main>
+
+<script>
+document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', e => {
+        e.preventDefault();
+        const id = link.getAttribute('href').slice(1);
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+    });
+});
+const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const id = entry.target.id;
+            document.querySelectorAll('.sidebar a').forEach(a => {
+                a.classList.toggle('active', a.getAttribute('href') === `#${id}`);
+            });
+        }
+    });
+}, { rootMargin: '-20% 0px -70% 0px' });
+document.querySelectorAll('h2[id], h1[id]').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

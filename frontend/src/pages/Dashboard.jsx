@@ -23,9 +23,9 @@ export default function Dashboard() {
         setData({
           report: session.report || {},
           dashboard: session.dashboard || {},
-          health_report: session.dashboard?.health_report || {},
-          trust_score: session.dashboard?.trust_score || 0,
-          advanced_insights: session.report?.advanced_insights || {},
+          health_report: session.health_report || {},
+          trust_score: session.trust_score || 0,
+          advanced_insights: session.advanced_insights || {},
         });
       })
       .catch((e) => setError(e.message))

@@ -27,15 +27,14 @@ class TargetAgent(BaseAgent):
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     def _is_meaningful_target(self, df, col):
-        """Check if a column is a meaningful ML target."""
+        """Check if a column is a meaningful ML target (classification or regression)."""
         nunique = df[col].nunique()
         ratio = nunique / len(df) if len(df) > 0 else 1
 
-        if ratio > 0.5:
+        # Too many unique values relative to rows → likely an ID column
+        if ratio > 0.8:
             return False
         if nunique < 2:
-            return False
-        if nunique > 20:
             return False
 
         col_lower = col.lower()
@@ -79,7 +78,17 @@ class TargetAgent(BaseAgent):
         # Ask AI only if no keyword match
         if target_col is None:
             try:
-                schema_info = "\n".join([f"{c}: {str(df[c].dtype)}, {df[c].nunique()} unique" for c in df.columns[:15]])
+                # Use the RAGRetriever built by SchemaInsightAgent if available.
+                # For narrow datasets (≤ 20 cols) it returns all columns;
+                # for wide datasets it surfaces the most "target-like" columns,
+                # preventing the old [:15] hard cut from missing churn/fraud cols at index 20+.
+                retriever = context.get("rag_retriever")
+                if retriever and retriever.rag_active:
+                    schema_info = retriever.get_schema(
+                        "prediction target outcome binary classification label churn fraud", k=20
+                    )
+                else:
+                    schema_info = "\n".join([f"{c}: {str(df[c].dtype)}, {df[c].nunique()} unique" for c in df.columns])
                 sample_data = df.head(3).to_string(max_cols=12)
 
                 prompt = f"""You are evaluating a dataset for machine learning.
@@ -138,6 +147,22 @@ If NO meaningful target exists, reply with exactly: SKIP_ML"""
             context["leakage_warnings"] = leakage_warnings
             self.log(f"Data leakage detected: {leakage_warnings}")
 
+        # ── Determine task type: classification vs regression ──────────────
+        target_dtype = df[target_col].dtype
+        nunique = df[target_col].nunique()
+
+        if pd.api.types.is_float_dtype(target_dtype) and nunique > 20:
+            task_type = "regression"
+        elif pd.api.types.is_integer_dtype(target_dtype) and nunique > 20:
+            task_type = "regression"
+        elif nunique <= 20:
+            task_type = "classification"
+        else:
+            task_type = "regression"
+
+        self.log(f"Task type: {task_type} (target='{target_col}', dtype={target_dtype}, nunique={nunique})")
+
         context["target_column"] = target_col
+        context["task_type"] = task_type
         context["skip_ml"] = False
         return context

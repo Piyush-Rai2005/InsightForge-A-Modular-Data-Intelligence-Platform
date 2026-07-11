@@ -11,13 +11,6 @@ export default function TabBar({ tabs, activeTab, onChange }) {
           <span className="tab-label">{tab.label}</span>
         </button>
       ))}
-      <div
-        className="tab-indicator"
-        style={{
-          width: `${100 / tabs.length}%`,
-          transform: `translateX(${tabs.findIndex((t) => t.id === activeTab) * 100}%)`,
-        }}
-      />
     </div>
   );
 }

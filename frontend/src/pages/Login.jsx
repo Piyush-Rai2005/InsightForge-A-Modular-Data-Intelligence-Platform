@@ -27,7 +27,7 @@ export default function Login() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">InsightForge</div>
+        <div className="auth-logo"><span className="auth-logo-white">Insight</span><span className="auth-logo-accent">Forge</span></div>
         <h2 className="auth-title">{isRegister ? "Create Account" : "Welcome Back"}</h2>
 
         <form onSubmit={handleSubmit} className="auth-form">

@@ -28,7 +28,7 @@ class _Cache:
             self._redis.ping()
             logger.info("Redis connected at %s", REDIS_URL)
         except Exception as e:
-            logger.warning("Redis unavailable (%s) — using in-memory cache", e)
+            logger.info("Redis not available (%s) — using in-memory cache (OK for dev)", e)
             self._redis = None
 
     # ── Core ops ────────────────────────────────────────────────────────────

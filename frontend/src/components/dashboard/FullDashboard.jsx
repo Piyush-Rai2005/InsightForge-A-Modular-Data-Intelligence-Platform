@@ -5,12 +5,20 @@ import TrustGauge from "./TrustGauge";
 import PlotlyChart from "../report/PlotlyChart";
 import { useChat } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const TABS = [
   { id: "quality", icon: "📊", label: "Data Quality" },
   { id: "insights", icon: "💡", label: "Business Insights" },
   { id: "charts", icon: "📈", label: "Visualizations" },
   { id: "chat", icon: "💬", label: "Chat" },
+];
+
+/* ── Premium color palette for charts ── */
+const CHART_COLORS = [
+  '#63d396', '#4ac2dc', '#a78bfa', '#f59e0b', '#ff5f6d',
+  '#6ee7b7', '#67e8f9', '#c4b5fd', '#fbbf24', '#fda4af',
 ];
 
 export default function FullDashboard({ data, analysisId }) {
@@ -57,22 +65,27 @@ function QualityTab({ report, dashboard, health, trustScore }) {
     ? ((missingValues.reduce((sum, m) => sum + m.missing, 0) / (overview.rows * overview.columns)) * 100).toFixed(1)
     : "0";
 
-  // Build missing values Plotly chart
+  // Build missing values Plotly chart with gradient-style bars
   const missingChart = missingValues.length > 0 ? {
     data: [{
       type: "bar",
       x: missingValues.map(m => m.column),
       y: missingValues.map(m => m.missing),
-      marker: { color: missingValues.map(m => m.missing > (overview.rows * 0.3) ? "#ff5f6d" : m.missing > (overview.rows * 0.1) ? "#f59e0b" : "#63d396") },
-      hovertemplate: "%{x}: %{y} missing<extra></extra>",
+      marker: {
+        color: missingValues.map((m, i) => {
+          if (m.missing > (overview.rows * 0.3)) return '#ff5f6d';
+          if (m.missing > (overview.rows * 0.1)) return '#f59e0b';
+          return CHART_COLORS[i % CHART_COLORS.length];
+        }),
+        line: { width: 0 },
+        opacity: 0.85,
+      },
+      hovertemplate: "<b>%{x}</b><br>%{y} missing<extra></extra>",
     }],
     layout: {
-      paper_bgcolor: "transparent", plot_bgcolor: "transparent",
-      font: { color: "#a0a0a0", size: 11 },
-      title: { text: "Missing Values by Column", font: { color: "#f0f2f5", size: 14 } },
-      xaxis: { tickangle: -45, gridcolor: "rgba(255,255,255,0.05)" },
-      yaxis: { title: "Count", gridcolor: "rgba(255,255,255,0.05)" },
-      margin: { l: 50, r: 20, t: 40, b: 100 },
+      title: { text: "Missing Values by Column", font: { color: "#eaedf3", size: 14 } },
+      xaxis: { tickangle: -45 },
+      margin: { l: 50, r: 20, t: 44, b: 100 },
     }
   } : null;
 
@@ -84,13 +97,13 @@ function QualityTab({ report, dashboard, health, trustScore }) {
     <div className="fd-tab fd-tab--quality">
       {/* KPI Row */}
       <div className="fd-kpi-row">
-        <KpiCard icon="📋" label="Total Rows" value={overview.rows?.toLocaleString()} color="rgba(99,211,150,0.12)" />
-        <KpiCard icon="📊" label="Total Columns" value={overview.columns} color="rgba(74,158,214,0.12)" />
-        <KpiCard icon="⚠️" label="Missing Data" value={`${missingPct}%`} subtitle={`${missingValues.length} columns affected`} color="rgba(245,158,11,0.12)" />
-        <KpiCard icon="🏆" label="Best Model" value={kpis.best_model || "—"} subtitle={kpis.best_model_accuracy != null ? `${(kpis.best_model_accuracy * 100).toFixed(1)}% accuracy` : "EDA mode"} color="rgba(167,139,250,0.12)" />
+        <KpiCard icon="📋" label="Total Rows" value={overview.rows?.toLocaleString()} color="rgba(99,211,150,0.1)" />
+        <KpiCard icon="📊" label="Total Columns" value={overview.columns} color="rgba(74,194,220,0.1)" />
+        <KpiCard icon="⚠️" label="Missing Data" value={`${missingPct}%`} subtitle={`${missingValues.length} columns affected`} color="rgba(245,158,11,0.1)" />
+        <KpiCard icon="🏆" label="Best Model" value={kpis.best_model || "—"} subtitle={kpis.best_model_accuracy != null ? `${(kpis.best_model_accuracy * 100).toFixed(1)}% accuracy` : "EDA mode"} color="rgba(167,139,250,0.1)" />
       </div>
 
-      {/* Trust Score */}
+      {/* Trust Score + Health */}
       <div className="fd-row">
         <div className="fd-card fd-card--gauge">
           <h3 className="fd-card-title">Data Trust Score</h3>
@@ -204,7 +217,11 @@ function InsightsTab({ report, advanced }) {
       {exec_summary && (
         <div className="fd-card fd-card--highlight">
           <h3 className="fd-card-title">📋 Executive Summary</h3>
-          <p className="fd-summary-text">{exec_summary}</p>
+          <div className="markdown-body fd-summary-text">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {exec_summary}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
 
@@ -215,15 +232,15 @@ function InsightsTab({ report, advanced }) {
           What This Means for Your Business
         </h3>
         <div className="fd-insight-list">
-          {(summary.executive_summary || []).length > 0 ? (
-            summary.executive_summary.map((item, i) => (
+          {(summary.executive_summary || []).filter(item => item && item.trim() !== "**" && item.trim() !== "***").length > 0 ? (
+            summary.executive_summary.filter(item => item && item.trim() !== "**" && item.trim() !== "***").map((item, i) => (
               <div key={i} className="fd-insight-item fd-insight-item--manager">
                 <span className="fd-insight-num">{String(i + 1).padStart(2, "0")}</span>
                 <span>{item}</span>
               </div>
             ))
           ) : (
-            recommendations.slice(0, 5).map((rec, i) => (
+            recommendations.filter(rec => rec && rec.trim() !== "**" && rec.trim() !== "***").slice(0, 5).map((rec, i) => (
               <div key={i} className="fd-insight-item fd-insight-item--manager">
                 <span className="fd-insight-num">{String(i + 1).padStart(2, "0")}</span>
                 <span>{rec}</span>
@@ -259,7 +276,7 @@ function InsightsTab({ report, advanced }) {
       )}
 
       {/* Business Questions */}
-      {business_questions && (
+      {business_questions && typeof business_questions === "string" && (
         <div className="fd-card">
           <h3 className="fd-card-title">❓ Business Questions This Data Can Answer</h3>
           <div className="fd-questions-list">
@@ -311,6 +328,30 @@ function ChartsTab({ report }) {
     skip_ml_reason,
   } = report;
 
+  // Build a model comparison donut chart
+  const modelDonut = !skip_ml && model_comparison.length > 0 ? {
+    data: [{
+      type: "pie",
+      labels: model_comparison.map(m => m.model),
+      values: model_comparison.map(m => m.accuracy),
+      hole: 0.55,
+      marker: {
+        colors: CHART_COLORS.slice(0, model_comparison.length),
+        line: { color: 'rgba(6,8,16,0.8)', width: 2 },
+      },
+      textinfo: "label+percent",
+      textfont: { color: '#eaedf3', size: 11 },
+      hovertemplate: "<b>%{label}</b><br>Accuracy: %{value:.2%}<extra></extra>",
+      sort: false,
+    }],
+    layout: {
+      title: { text: "Model Accuracy Distribution", font: { color: "#eaedf3", size: 14 } },
+      margin: { l: 20, r: 20, t: 44, b: 20 },
+      showlegend: true,
+      legend: { font: { color: 'rgba(234,237,243,0.6)', size: 11 } },
+    }
+  } : null;
+
   return (
     <div className="fd-tab fd-tab--charts">
       {skip_ml && (
@@ -337,33 +378,42 @@ function ChartsTab({ report }) {
         </div>
       )}
 
-      {/* Model Comparison Table */}
+      {/* Model Comparison — Table + Donut */}
       {!skip_ml && model_comparison.length > 0 && (
-        <div className="fd-card">
-          <h3 className="fd-card-title">⚡ Model Comparison</h3>
-          <div className="fd-table-wrap">
-            <table className="fd-table">
-              <thead>
-                <tr><th>Model</th><th>Accuracy</th><th>Performance</th></tr>
-              </thead>
-              <tbody>
-                {model_comparison.sort((a, b) => b.accuracy - a.accuracy).map((m, i) => {
-                  const pct = (m.accuracy * 100).toFixed(2);
-                  return (
-                    <tr key={m.model} className={i === 0 ? "fd-row--top" : ""}>
-                      <td>{i === 0 && "👑 "}{m.model}</td>
-                      <td>{pct}%{m.accuracy > 0.97 && <span className="fd-leakage-flag"> ⚠️</span>}</td>
-                      <td>
-                        <div className="fd-perf-track">
-                          <div className="fd-perf-bar" style={{ width: `${pct}%` }} />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <div className="fd-row">
+          <div className="fd-card">
+            <h3 className="fd-card-title">⚡ Model Comparison</h3>
+            <div className="fd-table-wrap">
+              <table className="fd-table">
+                <thead>
+                  <tr><th>Model</th><th>Accuracy</th><th>Performance</th></tr>
+                </thead>
+                <tbody>
+                  {model_comparison.sort((a, b) => b.accuracy - a.accuracy).map((m, i) => {
+                    const pct = (m.accuracy * 100).toFixed(2);
+                    return (
+                      <tr key={m.model} className={i === 0 ? "fd-row--top" : ""}>
+                        <td>{i === 0 && "👑 "}{m.model}</td>
+                        <td>{pct}%{m.accuracy > 0.97 && <span className="fd-leakage-flag"> ⚠️</span>}</td>
+                        <td>
+                          <div className="fd-perf-track">
+                            <div className="fd-perf-bar" style={{ width: `${pct}%` }} />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
+
+          {/* Donut chart */}
+          {modelDonut && (
+            <div className="fd-card">
+              <PlotlyChart spec={modelDonut} height={300} />
+            </div>
+          )}
         </div>
       )}
 
@@ -372,9 +422,12 @@ function ChartsTab({ report }) {
         <div className="fd-charts-grid">
           {visuals.map((v, i) => (
             <div key={i} className="fd-chart-card">
-              <div className="fd-chart-header">{v.title}</div>
+              <div className="fd-chart-header">
+                <span style={{ opacity: 0.6 }}>📊</span>
+                {v.title}
+              </div>
               <div className="fd-chart-body">
-                <PlotlyChart spec={v.plotly_spec} image={v.image} title={v.title} height={350} />
+                <PlotlyChart spec={v.plotly_spec} image={v.image} title={v.title} height={380} />
               </div>
               {v.insight && (
                 <div className="fd-chart-insight">
@@ -433,7 +486,13 @@ function ChatTab({ analysisId }) {
           {messages.map((m, i) => (
             <div key={i} className={`fd-msg fd-msg--${m.sender}`}>
               {m.sender === "ai" && <div className="fd-msg-avatar">🤖</div>}
-              <div className="fd-msg-bubble">{m.text}</div>
+              <div className="fd-msg-bubble">
+                {m.sender === "ai" ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+                ) : (
+                  m.text
+                )}
+              </div>
             </div>
           ))}
           {loading && (

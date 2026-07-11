@@ -1,4 +1,6 @@
 import PlotlyChart from "./PlotlyChart";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 /**
  * ReportPanel — Schema-aware report with business insights, data-specific charts,
@@ -56,7 +58,11 @@ export default function ReportPanel({ report }) {
             <span className="rp-section-icon">📋</span> Executive Summary
           </h2>
           <div className="rp-summary-box">
-            <p className="rp-summary-text">{exec_summary}</p>
+            <div className="markdown-body rp-summary-text">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {exec_summary}
+              </ReactMarkdown>
+            </div>
           </div>
         </section>
       )}
