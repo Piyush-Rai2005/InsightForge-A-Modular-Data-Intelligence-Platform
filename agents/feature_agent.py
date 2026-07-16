@@ -22,9 +22,10 @@ class FeatureAgent(BaseAgent):
             self.log("Target column missing in cleaned data; skipping feature heatmap.")
             return context
 
-        num_df = df.select_dtypes(include=["float", "int"])
+        num_df = df.select_dtypes(include=["number", "bool"])
         if target not in num_df.columns:
-            self.log("Target is non-numeric; correlation heatmap limited to numeric proxy.")
+            self.log(f"Target '{target}' is non-numeric/boolean. Skipping correlation heatmap.")
+            return context
         try:
             corrs = num_df.corr()[target].drop(target).abs().sort_values(ascending=False)
             top_feats = list(corrs.head(10).index)

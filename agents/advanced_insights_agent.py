@@ -201,7 +201,10 @@ class AdvancedInsightsAgent(BaseAgent):
         """
         Execute the advanced insights pipeline.
         """
-        df_raw = context.get("data")
+        df_raw = context.get("raw_data", context.get("data"))
+        if df_raw is None:
+            self.log("No data available for advanced insights.")
+            return context
         
         # Convert to pandas for complex statistical and time-series operations
         if isinstance(df_raw, pl.DataFrame):
