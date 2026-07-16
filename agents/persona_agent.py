@@ -100,7 +100,7 @@ Be specific and actionable. Use business terminology."""
                 prompt,
                 generation_config=genai.GenerationConfig(
                     response_mime_type="application/json",
-                    temperature=0.7,
+                    temperature=0.5,
                 )
             )
             
