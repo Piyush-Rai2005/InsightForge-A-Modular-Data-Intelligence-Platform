@@ -232,5 +232,10 @@ class AdvancedInsightsAgent(BaseAgent):
 
         context["advanced_insights"] = self.insights_report
         
+        # Sync anomalies back to the health report so the frontend Data Quality tab
+        # accurately reflects the anomalies detected in this advanced step.
+        if "health_report" in context and anomalies.get("top_alerts"):
+            context["health_report"]["anomalies"] = anomalies["top_alerts"]
+
         self.log("Advanced insights generation complete.")
         return context
