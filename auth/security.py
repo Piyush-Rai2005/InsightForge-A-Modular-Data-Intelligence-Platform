@@ -17,7 +17,12 @@ from .models import User
 
 load_dotenv()
 
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production-use-a-long-random-string")
+if len(JWT_SECRET.encode()) < 32:
+    raise RuntimeError(
+        "JWT_SECRET must be at least 32 bytes long. "
+        "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+    )
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "24"))
 

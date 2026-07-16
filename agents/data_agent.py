@@ -1,3 +1,4 @@
+import gc
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
@@ -15,8 +16,13 @@ class DataAgent(BaseAgent):
         super().__init__("DataAgent")
 
     def run(self, context):
+        # Keep one pristine copy for raw_data, work on a second in-place.
+        # Avoid a 3rd copy that would triple peak RAM.
         raw_df = context["data"].copy()
         df = raw_df.copy()
+        # Release the original reference so only raw_df + df live in RAM.
+        del context["data"]
+        gc.collect()
         self.log("Cleaning & preprocessing dataset...")
 
         # Strip whitespace from column names
@@ -95,6 +101,13 @@ class DataAgent(BaseAgent):
         if one_hot_cols:
             df = pd.get_dummies(df, columns=one_hot_cols, drop_first=True)
             self.log(f"One-hot encoded columns ({len(one_hot_cols)}): {', '.join(one_hot_cols[:5])}")
+
+        # ── Downcast numerics to halve RAM footprint ───────────────────────
+        for col in df.select_dtypes(include=["float64"]).columns:
+            df[col] = df[col].astype("float32")
+        for col in df.select_dtypes(include=["int64"]).columns:
+            df[col] = df[col].astype("int32")
+        gc.collect()
 
         context["raw_data"] = raw_df
         context["clean_data"] = df

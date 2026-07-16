@@ -73,3 +73,5 @@ htmlcov/
 # ---- Streamlit secrets/cache ----
 .streamlit/
 
+cache/data/
+
