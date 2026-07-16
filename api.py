@@ -305,7 +305,10 @@ async def analyze(
         db.add(session)
         db.commit()
 
-    job_id = dispatch_pipeline(df, analysis_id)
+    try:
+        job_id = dispatch_pipeline(df, analysis_id)
+    except RuntimeError as e:
+        raise HTTPException(429, str(e))
     return {"job_id": job_id, "analysis_id": analysis_id}
 
 

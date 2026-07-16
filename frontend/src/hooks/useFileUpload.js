@@ -37,7 +37,16 @@ export function useFileUpload() {
     }
   };
 
-  const pollStatus = async (id) => {
+  const pollStatus = async (id, attempt = 0) => {
+    // Hard cap: stop after ~2 minutes regardless of server state.
+    // Prevents infinite polling if the server is stuck or crashed.
+    const MAX_ATTEMPTS = 80;
+    if (attempt >= MAX_ATTEMPTS) {
+      setError("Analysis is taking too long. Please try again.");
+      setStatus(null);
+      return;
+    }
+
     try {
       const res = await fetch(`${BASE_URL}/jobs/${id}/status`, {
         headers: authHeaders(),
@@ -55,11 +64,15 @@ export function useFileUpload() {
         return;
       }
 
-      setTimeout(() => pollStatus(id), 1500);
+      // Back-off after 20 polls (30s): switch from 1.5s → 3s intervals
+      // halves server poll load during long-running jobs
+      const delay = attempt > 20 ? 3000 : 1500;
+      setTimeout(() => pollStatus(id, attempt + 1), delay);
     } catch (e) {
       setError("Lost connection to server");
     }
   };
+
 
   const fetchResult = async (id) => {
     try {
