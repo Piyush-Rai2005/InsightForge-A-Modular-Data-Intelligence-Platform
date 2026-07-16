@@ -95,10 +95,10 @@ def dispatch_pipeline(df, analysis_id: str = None) -> str:
             cache.set_job_status(job_id, "error", step=str(e), progress=0)
 
         finally:
-            try:
-                del df
-            except Exception:
-                pass
+            # df is a closure variable — Python releases it automatically when
+            # _run() exits. gc.collect() flushes any cyclic references.
+            # NOTE: do NOT `del df` here — it makes Python treat df as a local
+            # variable for the entire _run() scope, causing UnboundLocalError.
             gc.collect()
             _cancel_events.pop(job_id, None)
             _active_job_id = None
