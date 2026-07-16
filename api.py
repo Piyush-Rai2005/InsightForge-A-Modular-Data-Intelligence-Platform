@@ -50,7 +50,7 @@ from auth.models import User, AnalysisSession
 from auth.security import get_current_user, get_current_user_optional
 from auth.routes import auth_router
 from cache.redis_cache import cache
-from jobs.task_runner import dispatch_pipeline, get_result
+from jobs.task_runner import dispatch_pipeline, get_result, cancel_job
 from exports.pptx_exporter import generate_pptx
 from exports.excel_exporter import generate_excel
 from scheduler.report_scheduler import schedule_report, cancel_schedule
@@ -324,8 +324,17 @@ async def job_status(job_id: str):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# GET /jobs/{job_id}/result — fetch completed results
+# DELETE /jobs/{job_id} — cancel a running job
 # ═══════════════════════════════════════════════════════════════════════════
+@app.delete("/jobs/{job_id}")
+async def cancel_job_route(job_id: str):
+    cancelled = cancel_job(job_id)
+    if not cancelled:
+        raise HTTPException(404, "Job not found or already finished")
+    return {"status": "cancelled", "job_id": job_id}
+
+
+
 @app.get("/jobs/{job_id}/result")
 async def job_result(
     job_id: str,
