@@ -16,7 +16,8 @@ class InsightAgent(BaseAgent):
             resp = self.client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.5
+                temperature=0.5,
+                timeout=30,  # never hang longer than 30 s
             )
             return resp.choices[0].message.content.strip()
         except Exception as e:

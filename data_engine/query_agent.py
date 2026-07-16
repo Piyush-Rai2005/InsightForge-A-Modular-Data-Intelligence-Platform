@@ -592,6 +592,7 @@ Instructions:
                 model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,
+                timeout=30,  # never hang longer than 30 s
             )
             sql = resp.choices[0].message.content.strip()
             # Strip markdown fences the LLM sometimes wraps the query in
@@ -626,6 +627,7 @@ IMPORTANT: NEVER show the SQL query you ran to the user. Do NOT include any SQL 
                     model="llama-3.1-8b-instant",
                     messages=[{"role": "user", "content": interpret_prompt}],
                     temperature=0.3,
+                    timeout=30,  # never hang longer than 30 s
                 )
                 return resp2.choices[0].message.content.strip()
         except Exception as e:

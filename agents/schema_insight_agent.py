@@ -45,6 +45,7 @@ class SchemaInsightAgent(BaseAgent):
                 model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
+                timeout=30,  # never hang longer than 30 s
             )
             return resp.choices[0].message.content.strip()
         except Exception as e:
@@ -70,23 +71,17 @@ class SchemaInsightAgent(BaseAgent):
         geo_keywords = ["state", "city", "country", "region", "zip", "lat", "lng", "longitude", "latitude", "location", "address"]
         id_keywords = ["_id", "id_", "uuid", "key", "code", "identifier"]
 
-        # ── Compute all nunique values in ONE vectorized pass ──────────────
-        # Previously: df[col].nunique() called N times = N full column scans.
-        # Now: one df.nunique() call scans the whole frame once.
-        nuniques = df.nunique()
-        n_rows = len(df)
-
         for col in df.columns:
             low = col.lower().strip()
             dtype = str(df[col].dtype)
-            n_unique = int(nuniques[col])
-            ratio = n_unique / n_rows if n_rows > 0 else 0
+            nunique = df[col].nunique()
+            ratio = nunique / len(df) if len(df) > 0 else 0
 
             # IDs: very high cardinality
-            if ratio > 0.9 and n_unique > 100:
+            if ratio > 0.9 and nunique > 100:
                 semantics["id_cols"].append(col)
                 continue
-            if any(k in low for k in id_keywords) and n_unique > n_rows * 0.5:
+            if any(k in low for k in id_keywords) and nunique > len(df) * 0.5:
                 semantics["id_cols"].append(col)
                 continue
 
@@ -119,7 +114,7 @@ class SchemaInsightAgent(BaseAgent):
                 continue
 
             # Categoricals (low-medium cardinality strings)
-            if dtype == "object" and n_unique <= 50:
+            if dtype == "object" and nunique <= 50:
                 semantics["category_cols"].append(col)
                 continue
 
@@ -418,34 +413,12 @@ class SchemaInsightAgent(BaseAgent):
 
         return charts
 
-    # Max columns to analyse — beyond this we sample representatively
-    # to keep Groq prompts under token limits and chart gen fast.
-    MAX_ANALYSIS_COLS = 300
-
     def run(self, context):
         df = context.get("raw_data", context.get("data"))
         if df is None:
             return context
 
         self.log("Analyzing schema for business-relevant insights...")
-
-        # ── Wide-dataset guard ───────────────────────────────────────────────
-        total_cols = len(df.columns)
-        if total_cols > self.MAX_ANALYSIS_COLS:
-            obj_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
-            num_cols = df.select_dtypes(include="number").columns.tolist()
-            remaining = self.MAX_ANALYSIS_COLS - len(obj_cols)
-            top_num = (
-                df[num_cols].var().nlargest(max(remaining, 0)).index.tolist()
-                if num_cols and remaining > 0 else []
-            )
-            keep = (obj_cols + top_num)[:self.MAX_ANALYSIS_COLS]
-            df = df[keep]
-            self.log(
-                f"Wide dataset ({total_cols} cols) — capped analysis to "
-                f"{len(keep)} most informative cols "
-                f"({len(obj_cols)} categorical + {len(top_num)} numeric by variance)"
-            )
 
         # ── Build RAGRetriever (threshold-aware: RAG only when > 20 columns) ────
         retriever = RAGRetriever(df)
